@@ -1,0 +1,49 @@
+<!-- templates/modals/new_log_modal.html -->
+<div class="modal fade" id="newLogModal" tabindex="-1" aria-labelledby="newLogModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method="POST" action="{{ url_for('main.add_log') }}">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Yeni Log Ekle</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Form alanları -->
+            <div class="mb-3">
+              <label class="form-label">Tarih</label>
+              <input type="date" name="date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Aktivite Tipi</label>
+              <select name="activity_type" class="form-select" required>
+                <option value="film">Film</option>
+                <option value="dizi">Dizi Bölümü</option>
+                <option value="spor_ev">Evde Spor</option>
+                <option value="spor_stad">Statta Spor</option>
+                <option value="konser">Konser</option>
+                <option value="randevu">Randevu</option>
+                <option value="hatırlatma">Hatırlatma</option>
+                <option value="diğer">Diğer</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Açıklama</label>
+              <input type="text" name="description" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Lokasyon (isteğe bağlı)</label>
+              <input type="text" name="location" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Puan (isteğe bağlı)</label>
+              <input type="number" name="rating" class="form-control" step="0.1" min="0" max="10">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-success">Kaydet</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  

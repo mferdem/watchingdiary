@@ -1,0 +1,35 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Takvim</h2>
+  <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#newLogModal">Yeni Log Ekle</button>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Tarih</th>
+        <th>Aktiviteler</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for date, activities in logs_by_date.items() %}
+        <tr>
+          <td>{{ date.strftime('%Y-%m-%d') }}</td>
+          <td>
+            {% for log in activities %}
+              <div>
+                <strong>{{ log.activity_type }}:</strong> {{ log.description }}
+                {% if log.rating %}- <em>Puan: {{ log.rating }}</em>{% endif %}
+                {% if log.location %}- @{{ log.location }}{% endif %}
+              </div>
+            {% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% include 'modals/new_log_modal.html' %}
+{% endblock %}
