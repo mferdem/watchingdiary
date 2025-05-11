@@ -1,24 +1,22 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Takvim Uygulaması</title>
+    <title>Calendar App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Updock&display=swap" rel="stylesheet">
-<style>
-  .navbar-brand {
-    font-family: "Updock", cursive;
-    font-weight: 400;
-    font-style: normal;
-    font-size: 2rem;
-    letter-spacing: 1px;
-  }
-</style>
-
-    
+    <style>
+      .navbar-brand {
+        font-family: "Updock", cursive;
+        font-weight: 400;
+        font-style: normal;
+        font-size: 2rem;
+        letter-spacing: 1px;
+      }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark mb-2">
@@ -27,9 +25,7 @@
             nobody exists on purpose. nobody belongs anywhere. everybody's gonna die. come watch tv?
           </a>
         </div>
-      </nav>
-
-    
+    </nav>
 
     <div class="container-fluid">
         {% block content %}{% endblock %}
@@ -37,6 +33,5 @@
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/log_modal_behavior.js') }}"></script>
-
 </body>
 </html>

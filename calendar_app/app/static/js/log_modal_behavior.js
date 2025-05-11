@@ -4,10 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('nameInput');
 
   const sections = {
-    film: document.getElementById('filmFields'),
-    dizi: document.getElementById('diziFields'),
-    maç: document.getElementById('matchFields'),
-    konser: document.getElementById('concertFields')
+    movie: document.getElementById('movieFields'),
+    series: document.getElementById('seriesFields'),
+    match: document.getElementById('matchFields'),
+    concert: document.getElementById('concertFields')
   };
 
   const hideAllSections = () => {
@@ -23,16 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Film için "sinemada izlendi" kontrolü
-  const filmCheck = document.getElementById('filmInCinema');
-  const filmCinemaFields = document.getElementById('filmCinemaFields');
-  if (filmCheck) {
-    filmCheck.addEventListener('change', () => {
-      filmCinemaFields.classList.toggle('d-none', !filmCheck.checked);
+  // Movie için "sinemada izlendi" kontrolü
+  const movieCheck = document.getElementById('movieInCinema');
+  const movieCinemaFields = document.getElementById('movieCinemaFields');
+  if (movieCheck) {
+    movieCheck.addEventListener('change', () => {
+      movieCinemaFields.classList.toggle('d-none', !movieCheck.checked);
     });
   }
 
-  // Maç için "statta izlendi" kontrolü
+  // Match için "statta izlendi" kontrolü
   const stadiumCheck = document.getElementById('matchInStadium');
   const stadiumFields = document.getElementById('stadiumFields');
   if (stadiumCheck) {
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Maç bilgilerine göre name inputunu otomatik doldur
+  // Match bilgilerine göre name inputunu otomatik doldur
   const team1 = document.getElementById('team1');
   const score1 = document.getElementById('score1');
   const team2 = document.getElementById('team2');

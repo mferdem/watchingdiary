@@ -1,16 +1,13 @@
-<!-- templates/index.html -->
 {% extends 'base.html' %}
-
 {% block content %}
 <div class="container-fluid">
-
   {% include 'year_month_picker.html' %}
-  
+
   <table class="table table-bordered">
     <thead>
       <tr>
-        <th style="width: 10%;">Tarih</th>
-        <th>Aktiviteler</th>
+        <th style="width: 10%;">Date</th>
+        <th>Activities</th>
       </tr>
     </thead>
     <tbody>
@@ -20,59 +17,38 @@
             {{ day.strftime("%d %B '%y %A") }}
           </td>
           <td>
-            <div class="row gx-2 gy-2 ">
+            <div class="row gx-2 gy-2">
               {% for log in logs_by_date.get(day, []) %}
                 {% set size = 2 %}
-                {% if log.activity_type == 'maç' and log.location %}
+                {% if log.activity_type == 'match' and log.location %}
                   {% set size = 8 %}
                 {% elif log.activity_type in event_styles %}
                   {% set size = event_styles[log.activity_type]['size'] %}
                 {% endif %}
-            
                 <div class="col-{{ size }}">
                   <div class="position-relative p-2 text-white text-center rounded event-{{ log.activity_type }}">
-                    <!-- Sil ve Düzenle Butonları -->
                     <div style="position: absolute; top: 2px; right: 4px; display: flex; gap: 4px;">
-                      <!-- Düzenle -->
                       <a href="{{ url_for('main.edit_log', log_id=log.id) }}"
                          class="btn btn-sm btn-light d-flex align-items-center justify-content-center"
-                         title="Düzenle"
+                         title="Edit"
                          style="width: 20px; height: 20px; font-size: 0.75rem; padding: 0;">✏</a>
-                         
-                      <!-- Sil -->
                       <form method="POST" action="{{ url_for('main.delete_log', log_id=log.id) }}"
-                            onsubmit="return confirm('Bu log silinsin mi?')">
+                            onsubmit="return confirm('Delete this log?')">
                         <button class="btn btn-sm btn-danger d-flex align-items-center justify-content-center"
-                                title="Sil"
+                                title="Delete"
                                 style="width: 20px; height: 20px; font-size: 0.75rem; padding: 0;">×</button>
                       </form>
-                    
-                      
                     </div>
 
-            
-                    <!-- İçerik -->
                     <div class="pe-3 text-truncate">
-                      {% if log.activity_type == 'film' %}
+                      {% if log.activity_type == 'movie' %}
                         {{ log.name }}{% if log.year %} ({{ log.year }}){% endif %}
-            
-                      {% elif log.activity_type == 'dizi' %}
-                        {{ log.name }}
-                        {% if log.season and log.episode %}
-                          {{ log.season }}{{ "%02d"|format(log.episode) }}
-                        {% endif %}
-            
-                      {% elif log.activity_type == 'maç' %}
-                        {% if 'beşiktaş' in log.name|lower %}
-                          <img src="{{ url_for('static', filename='img/bjk.svg') }}" alt="Beşiktaş" style="height: 20px; margin-right: 5px; vertical-align: middle;">
-                        {% elif 'türkiye' in log.name|lower %}
-                          <img src="{{ url_for('static', filename='img/turkey.png') }}" alt="Türkiye" style="height: 20px; margin-right: 5px; vertical-align: middle;">
-                        {% endif %}
+                      {% elif log.activity_type == 'series' %}
+                        {{ log.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
+                      {% elif log.activity_type == 'match' %}
                         {{ log.name }}{% if log.location %} @{{ log.location }}{% endif %}
-            
-                      {% elif log.activity_type == 'konser' %}
+                      {% elif log.activity_type == 'concert' %}
                         {{ log.name }}{% if log.location %} @{{ log.location }}{% endif %}
-            
                       {% else %}
                         {{ log.name }}
                       {% endif %}
@@ -81,18 +57,16 @@
                 </div>
               {% endfor %}
             </div>
-            
           </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
-  
 </div>
-<button class="btn btn-primary position-fixed bottom-0 end-0 m-4" data-bs-toggle="modal" data-bs-target="#newLogModal" style="z-index: 1050;">
-  + Yeni Log
-</button>
 
+<button class="btn btn-primary position-fixed bottom-0 end-0 m-4" data-bs-toggle="modal" data-bs-target="#newLogModal" style="z-index: 1050;">
+  + New Log
+</button>
 
 {% include 'modals/new_log_modal.html' %}
 {% endblock %}

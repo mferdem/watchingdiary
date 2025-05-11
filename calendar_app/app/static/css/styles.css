@@ -1,28 +1,28 @@
-.event-film {
+.event-movie {
     background-color: #4338ca; /* indigo-700 */
   }
   
-  .event-dizi {
+  .event-series {
     background-color: #f97316; /* orange-500 */
   }
   
-  .event-maç {
+  .event-match {
     background-color: black;
   }
   
-  .event-konser {
+  .event-concert {
     background-color: #db2777; /* pink-600 */
   }
   
-  .event-randevu {
+  .event-appointment {
     background-color: #0ea5e9; /* sky-500 */
   }
   
-  .event-hatırlatma {
+  .event-reminder {
     background-color: #64748b; /* slate-500 */
   }
   
-  .event-diğer {
+  .event-other {
     background-color: #e5e7eb; /* zinc-100 */
     color: black;
   }
