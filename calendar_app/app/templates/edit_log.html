@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  <h3 class="mb-4">Log Güncelle</h3>
+  <form method="POST" action="{{ url_for('main.edit_log', log_id=log.id) }}">
+    <!-- GENEL ALANLAR -->
+    <div class="mb-3">
+      <label class="form-label">Tarih</label>
+      <input type="date" name="date" class="form-control" value="{{ log.date.strftime('%Y-%m-%d') }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Aktivite Tipi</label>
+      <select name="activity_type" class="form-select" id="activityType" required>
+        {% set types = ['film', 'dizi', 'maç', 'konser', 'randevu', 'hatırlatma', 'diğer'] %}
+        {% for t in types %}
+          <option value="{{ t }}" {% if log.activity_type == t %}selected{% endif %}>{{ t.capitalize() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Ad</label>
+      <input type="text" name="name" class="form-control" value="{{ log.name }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Notlar</label>
+      <textarea name="notes" class="form-control" rows="2">{{ log.notes }}</textarea>
+    </div>
+
+    <!-- ALANLAR KOŞULLU GÖSTERİLEBİLİR: Jinja tarafından doldurulmuş -->
+    {% if log.activity_type == 'film' %}
+      <div class="mb-3">
+        <label class="form-label">Yapım Yılı</label>
+        <input type="number" name="year" class="form-control" value="{{ log.year or '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Süre (dk)</label>
+        <input type="number" name="duration" class="form-control" value="{{ log.duration or '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">IMDb ID</label>
+        <input type="text" name="imdb_id" class="form-control" value="{{ log.imdb_id or '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Puan</label>
+        <input type="number" name="rating" step="0.1" min="0" max="10" class="form-control" value="{{ log.rating or '' }}">
+      </div>
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="filmInCinema" id="filmInCinema" {% if log.filmincinema %}checked{% endif %}>
+        <label class="form-check-label" for="filmInCinema">Sinemada izlendi</label>
+      </div>
+      {% if log.filmincinema %}
+        <div class="mb-3">
+          <label class="form-label">Lokasyon</label>
+          <input type="text" name="location_film" class="form-control" value="{{ log.location or '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Kiminle?</label>
+          <input type="text" name="companions_film" class="form-control" value="{{ log.companions or '' }}">
+        </div>
+      {% endif %}
+
+    {% elif log.activity_type == 'dizi' %}
+      <div class="mb-3">
+        <label class="form-label">Sezon</label>
+        <input type="number" name="season" class="form-control" value="{{ log.season or '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Bölüm</label>
+        <input type="number" name="episode" class="form-control" value="{{ log.episode or '' }}">
+      </div>
+
+    {% elif log.activity_type == 'maç' %}
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" name="matchInStadium" id="matchInStadium" {% if log.location %}checked{% endif %}>
+        <label class="form-check-label" for="matchInStadium">Statta izlendi</label>
+      </div>
+      {% if log.location %}
+        <div class="mb-3">
+          <label class="form-label">Lokasyon</label>
+          <input type="text" name="location_match" class="form-control" value="{{ log.location or '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Kiminle?</label>
+          <input type="text" name="companions_match" class="form-control" value="{{ log.companions or '' }}">
+        </div>
+      {% endif %}
+
+    {% elif log.activity_type == 'konser' %}
+      <div class="mb-3">
+        <label class="form-label">Lokasyon</label>
+        <input type="text" name="location_concert" class="form-control" value="{{ log.location or '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Kiminle?</label>
+        <input type="text" name="companions_concert" class="form-control" value="{{ log.companions or '' }}">
+      </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-success">Güncelle</button>
+    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">İptal</a>
+  </form>
+</div>
+{% endblock %}

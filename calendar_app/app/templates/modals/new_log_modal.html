@@ -1,49 +1,140 @@
-<!-- templates/modals/new_log_modal.html -->
 <div class="modal fade" id="newLogModal" tabindex="-1" aria-labelledby="newLogModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <form method="POST" action="{{ url_for('main.add_log') }}">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Yeni Log Ekle</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <div class="modal-dialog">
+    <form method="POST" action="{{ url_for('main.add_log') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Yeni Aktivite Ekle</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- GENEL ALANLAR -->
+          <div class="mb-3">
+            <label class="form-label">Tarih</label>
+            <input type="date" name="date" class="form-control" value="{{ today }}" required>
           </div>
-          <div class="modal-body">
-            <!-- Form alanları -->
+
+          <div class="mb-3">
+            <label class="form-label">Aktivite Tipi</label>
+            <select name="activity_type" class="form-select" id="activityType" required>
+              <option value="">Seçiniz</option>
+              <option value="film">Film</option>
+              <option value="dizi">Dizi</option>
+              <option value="maç">Maç</option>
+              <option value="konser">Konser</option>
+              <option value="randevu">Randevu</option>
+              <option value="hatırlatma">Hatırlatma</option>
+              <option value="diğer">Diğer</option>
+            </select>
+          </div>
+
+          <div class="mb-3" id="nameGroup">
+            <label class="form-label">Ad</label>
+            <input type="text" name="name" class="form-control" id="nameInput" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Notlar</label>
+            <textarea name="notes" class="form-control" rows="2"></textarea>
+          </div>
+
+          <!-- FILM ALANLARI -->
+          <div id="filmFields" class="d-none">
             <div class="mb-3">
-              <label class="form-label">Tarih</label>
-              <input type="date" name="date" class="form-control" required>
+              <label class="form-label">Yapım Yılı</label>
+              <input type="number" name="year" class="form-control">
             </div>
             <div class="mb-3">
-              <label class="form-label">Aktivite Tipi</label>
-              <select name="activity_type" class="form-select" required>
-                <option value="film">Film</option>
-                <option value="dizi">Dizi Bölümü</option>
-                <option value="spor_ev">Evde Spor</option>
-                <option value="spor_stad">Statta Spor</option>
-                <option value="konser">Konser</option>
-                <option value="randevu">Randevu</option>
-                <option value="hatırlatma">Hatırlatma</option>
-                <option value="diğer">Diğer</option>
-              </select>
+              <label class="form-label">Süre (dk)</label>
+              <input type="number" name="duration" class="form-control">
             </div>
             <div class="mb-3">
-              <label class="form-label">Açıklama</label>
-              <input type="text" name="description" class="form-control">
+              <label class="form-label">IMDb ID</label>
+              <input type="text" name="imdb_id" class="form-control">
             </div>
             <div class="mb-3">
-              <label class="form-label">Lokasyon (isteğe bağlı)</label>
-              <input type="text" name="location" class="form-control">
+              <label class="form-label">Puan</label>
+              <input type="number" name="rating" step="0.1" min="0" max="10" class="form-control">
             </div>
-            <div class="mb-3">
-              <label class="form-label">Puan (isteğe bağlı)</label>
-              <input type="number" name="rating" class="form-control" step="0.1" min="0" max="10">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="filmInCinema" name="filmInCinema">
+              <label class="form-check-label" for="filmInCinema">Sinemada izlendi</label>
+            </div>
+            <div id="filmCinemaFields" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">Lokasyon</label>
+                <input type="text" name="location_cinema" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Kiminle?</label>
+                <input type="text" name="companions_cinema" class="form-control">
+              </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-success">Kaydet</button>
+
+          <!-- DIZI ALANLARI -->
+          <div id="diziFields" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Sezon</label>
+              <input type="number" name="season" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Bölüm</label>
+              <input type="number" name="episode" class="form-control">
+            </div>
+          </div>
+
+          <!-- MAÇ ALANLARI -->
+          <div id="matchFields" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Takım 1</label>
+              <input type="text" id="team1" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Skor (Takım 1)</label>
+              <input type="number" id="score1" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Takım 2</label>
+              <input type="text" id="team2" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Skor (Takım 2)</label>
+              <input type="number" id="score2" class="form-control">
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="matchInStadium" name="matchInStadium">
+              <label class="form-check-label" for="matchInStadium">Statta izlendi</label>
+            </div>
+            <div id="stadiumFields" class="d-none">
+              <div class="mb-3">
+                <label class="form-label">Lokasyon</label>
+                <input type="text" name="location_match" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Kiminle?</label>
+                <input type="text" name="companions_match" class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- KONSER ALANLARI -->
+          <div id="concertFields" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Lokasyon</label>
+              <input type="text" name="location_concert" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Kiminle?</label>
+              <input type="text" name="companions_concert" class="form-control">
+            </div>
           </div>
         </div>
-      </form>
-    </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Kaydet</button>
+        </div>
+      </div>
+    </form>
   </div>
-  
+</div>
+
+
