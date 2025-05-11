@@ -159,3 +159,34 @@ def delete_log(log_id):
     log.status = 0
     db.session.commit()
     return redirect(url_for('main.index'))
+
+@main.route('/movies')
+def movie_list():
+    from app.models import Movie, Log
+    year = request.args.get('year', type=int)
+
+    movies_query = Movie.query
+    if year:
+        movies_query = movies_query.filter(Movie.year == year)
+
+    movies = movies_query.order_by(Movie.year.desc().nullslast(), Movie.name.asc()).all()
+
+    enriched_movies = []
+    for movie in movies:
+        logs = Log.query.filter_by(activity_type='movie', name=movie.name, status=1).all()
+        watch_count = len(logs)
+        cinema_count = sum(1 for log in logs if log.filmincinema)
+        last_watch = max((log.date for log in logs if log.date), default=None)
+
+        enriched_movies.append({
+            'movie': movie,
+            'watch_count': watch_count,
+            'cinema_count': cinema_count,
+            'last_watch': last_watch
+        })
+
+    return render_template(
+        'movie_list.html',
+        movies=enriched_movies,
+        selected_year=year
+    )
