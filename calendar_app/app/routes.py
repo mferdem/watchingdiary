@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import datetime, date
 from calendar import monthrange
 from app.models import db, Log, Movie, Series
+import csv
+import io
+from imdb import IMDb
 
 main = Blueprint('main', __name__)
 
@@ -190,3 +193,156 @@ def movie_list():
         movies=enriched_movies,
         selected_year=year
     )
+
+@main.route('/import_logs', methods=['GET', 'POST'])
+def import_logs():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file or not file.filename.endswith('.csv'):
+            flash('Please upload a valid CSV file.', 'danger')
+            return redirect(request.url)
+
+        try:
+            content = file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            flash('Unable to decode CSV file. Make sure it is UTF-8 encoded.', 'danger')
+            return redirect(request.url)
+
+        reader = csv.DictReader(io.StringIO(content))
+        imported_count = 0
+        skipped = 0
+
+        for row in reader:
+            try:
+                date_value = datetime.strptime(row['date'], '%Y-%m-%d').date()
+                activity_type = row['activity_type'].strip().lower()
+                name = row.get('name', '').strip()
+
+                if not activity_type or not name:
+                    skipped += 1
+                    continue
+
+                log = Log(
+                    date=date_value,
+                    activity_type=activity_type,
+                    name=name,
+                    notes=row.get('notes', '').strip(),
+                    year=int(row['year']) if row.get('year') else None,
+                    duration=int(row['duration']) if row.get('duration') else None,
+                    imdb_id=row.get('imdb_id') or None,
+                    rating=float(row['rating']) if row.get('rating') else None,
+                    filmincinema=row.get('filmincinema', '').lower() == 'yes',
+                    season=int(row['season']) if row.get('season') else None,
+                    episode=int(row['episode']) if row.get('episode') else None,
+                    location=row.get('location') or None,
+                    companions=row.get('companions') or None,
+                    status=1
+                )
+
+                db.session.add(log)
+
+                if activity_type == 'movie':
+                    existing = Movie.query.filter_by(name=name, year=log.year).first()
+                    if not existing:
+                        db.session.add(Movie(
+                            name=name,
+                            year=log.year,
+                            duration=log.duration,
+                            imdb_id=log.imdb_id,
+                            rating=log.rating
+                        ))
+
+                if activity_type == 'series':
+                    existing = Series.query.filter_by(name=name).first()
+                    if not existing:
+                        db.session.add(Series(name=name))
+
+                imported_count += 1
+
+            except Exception as e:
+                print(f"Skipping row due to error: {e}")
+                skipped += 1
+
+        db.session.commit()
+        flash(f'{imported_count} logs imported. {skipped} skipped.', 'success')
+        return redirect(url_for('main.index'))
+
+    return render_template('import_logs.html')
+
+@main.route('/import_movies_csv', methods=['GET', 'POST'])
+def import_movies_csv():
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file or not file.filename.endswith('.csv'):
+            flash("Please upload a valid CSV file.", 'danger')
+            return redirect(request.url)
+
+        content = file.read().decode('utf-8')
+        reader = csv.reader(io.StringIO(content), delimiter=';')
+
+        imdb_api = IMDb()
+        imported = 0
+        skipped = 0
+        next(reader)  # skip header row
+
+        for row in reader:
+            try:
+                imdb_id = row[1].strip()
+                if not imdb_id.startswith('tt'):
+                    skipped += 1
+                    continue
+
+                # Movie bilgisi IMDb'den çekilir
+                movie_info = imdb_api.get_movie(imdb_id[2:])
+                title = movie_info.get('original title') or movie_info.get('title')
+                year = movie_info.get('year')
+                runtime = int(movie_info.get('runtimes', ['0'])[0])
+                alt_name = movie_info.get('title')
+
+                # Movie ekle (daha önce yoksa)
+                existing = Movie.query.filter_by(name=title, year=year).first()
+                if not existing:
+                    movie = Movie(
+                        name=title,
+                        year=year,
+                        duration=runtime,
+                        imdb_id=imdb_id,
+                    )
+                    db.session.add(movie)
+                else:
+                    movie = existing
+
+                # İzlenme tarihlerini işle
+                for date_str in row[2:]:
+                    date_str = date_str.strip()
+                    if not date_str:
+                        continue
+                    try:
+                        watch_date = datetime.strptime(date_str, '%d.%m.%Y').date()
+                        log = Log(
+                            date=watch_date,
+                            activity_type='movie',
+                            name=title,
+                            notes=alt_name,
+                            year=year,
+                            duration=runtime,
+                            imdb_id=imdb_id,
+                            filmincinema=False,
+                            status=1
+                        )
+                        db.session.add(log)
+                    except Exception as e:
+                        print(f"Invalid date format: {date_str} – {e}")
+                        continue
+
+                imported += 1
+                print(f"{title} Added Succesfully")
+            except Exception as e:
+                print(f"Skipped row due to error: {e}")
+                skipped += 1
+
+        db.session.commit()
+        flash(f"{imported} movie rows processed. {skipped} skipped.", 'success')
+        return redirect(url_for('main.index'))
+
+    return render_template('import_movies_csv.html')
