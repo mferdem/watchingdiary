@@ -41,10 +41,10 @@
                     </div>
 
                     <div class="pe-3 text-truncate">
-                      {% if log.activity_type == 'movie' %}
-                        {{ log.name }}{% if log.year %} ({{ log.year }}){% endif %}
-                      {% elif log.activity_type == 'series' %}
-                        {{ log.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
+                      {% if log.is_movie() %}
+                        {{ log.movie.name }}{% if log.movie.year %} ({{ log.movie.year }}){% endif %}
+                      {% elif log.is_series() %}
+                        {{ log.series.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
                       {% elif log.activity_type == 'match' %}
                         {{ log.name }}{% if log.location %} @{{ log.location }}{% endif %}
                       {% elif log.activity_type == 'concert' %}

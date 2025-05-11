@@ -7,7 +7,6 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <!-- GENERAL FIELDS -->
           <div class="mb-3">
             <label class="form-label">Date</label>
             <input type="date" name="date" class="form-control" value="{{ today }}" required>
@@ -37,7 +36,7 @@
             <textarea name="notes" class="form-control" rows="2"></textarea>
           </div>
 
-          <!-- MOVIE FIELDS -->
+          <!-- Movie -->
           <div id="movieFields" class="d-none">
             <div class="mb-3">
               <label class="form-label">Year</label>
@@ -50,10 +49,6 @@
             <div class="mb-3">
               <label class="form-label">IMDb ID</label>
               <input type="text" name="imdb_id" class="form-control">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Rating</label>
-              <input type="number" name="rating" step="0.1" min="0" max="10" class="form-control">
             </div>
             <div class="form-check mb-2">
               <input class="form-check-input" type="checkbox" id="movieInCinema" name="filmInCinema">
@@ -71,7 +66,7 @@
             </div>
           </div>
 
-          <!-- SERIES FIELDS -->
+          <!-- Series -->
           <div id="seriesFields" class="d-none">
             <div class="mb-3">
               <label class="form-label">Season</label>
@@ -83,7 +78,7 @@
             </div>
           </div>
 
-          <!-- MATCH FIELDS -->
+          <!-- Match -->
           <div id="matchFields" class="d-none">
             <div class="mb-3">
               <label class="form-label">Team 1</label>
@@ -117,7 +112,7 @@
             </div>
           </div>
 
-          <!-- CONCERT FIELDS -->
+          <!-- Concert -->
           <div id="concertFields" class="d-none">
             <div class="mb-3">
               <label class="form-label">Location</label>

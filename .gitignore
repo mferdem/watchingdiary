@@ -128,5 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
+# omdb api config
 static/js/omdb_config.js
+
+# migrations
+migrations/
