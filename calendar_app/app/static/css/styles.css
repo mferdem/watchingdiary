@@ -1,51 +1,57 @@
 .event-movie {
-    background-color: #4338ca; /* indigo-700 */
-  }
-  
-  .event-series {
-    background-color: #f97316; /* orange-500 */
-  }
-  
-  .event-match {
-    background-color: black;
-  }
-  
-  .event-concert {
-    background-color: #db2777; /* pink-600 */
-  }
-  
-  .event-appointment {
-    background-color: #0ea5e9; /* sky-500 */
-  }
-  
-  .event-reminder {
-    background-color: #64748b; /* slate-500 */
-  }
-  
-  .event-other {
-    background-color: #e5e7eb; /* zinc-100 */
-    color: black;
+    background-color: #0066ff;
   }
 
-  .filter-chip {
-    display: inline-block;
-    padding: 6px 12px;
-    background-color: #f0f0f0;
-    color: #333;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    user-select: none;
+.event-cinema {
+    color: black;
+    font-weight: bold;
+    background-color: #3cc8ff;
+    
   }
   
-  .filter-chip:hover {
-    background-color: #dcdcdc;
-  }
-  
-  .filter-chip.active {
-    background-color: #007bff;
-    color: white;
-  }
-  
-  
+.event-series {
+  background-color: #f97316; /* orange-500 */
+}
+
+.event-match {
+  background-color: black;
+}
+
+.event-concert {
+  background-color: #db2777; /* pink-600 */
+}
+
+.event-appointment {
+  background-color: #0ea5e9; /* sky-500 */
+}
+
+.event-reminder {
+  background-color: #64748b; /* slate-500 */
+}
+
+.event-other {
+  background-color: #e5e7eb; /* zinc-100 */
+  color: black;
+}
+
+.filter-chip {
+  display: inline-block;
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.filter-chip:hover {
+  background-color: #dcdcdc;
+}
+
+.filter-chip.active {
+  background-color: #007bff;
+  color: white;
+}
+

@@ -8,6 +8,16 @@ from imdb import IMDb
 
 main = Blueprint('main', __name__)
 
+activity_sizes = {
+    'movie': 3,
+    'series': 2,
+    'match': 5,
+    'concert': 8,
+    'appointment': 8,
+    'reminder': 4,
+    'other': 4
+}
+
 @main.route('/')
 def index():
     today = date.today()
@@ -33,6 +43,7 @@ def index():
         selected_year=selected_year,
         selected_month=selected_month,
         today=today,
+        activity_sizes=activity_sizes,
         months_tr=["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
                    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
     )
@@ -103,54 +114,71 @@ def edit_log(log_id):
 
     if request.method == 'POST':
         log.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
-        log.activity_type = request.form['activity_type']
-        log.name = request.form.get('name', '').strip()
         log.notes = request.form.get('notes', '').strip()
+        activity_type = log.activity_type  # değiştirilemez
+
+        name = request.form.get('name', '').strip()
+        imdb_id = request.form.get('imdb_id') or None
+
         log.location = None
         log.companions = None
+        log.movie_id = None
+        log.series_id = None
+        log.season = None
+        log.episode = None
 
-        if log.activity_type == 'movie':
-            imdb_id = request.form.get('imdb_id') or None
-            year = request.form.get('year') or None
-            duration = request.form.get('duration') or None
+        if activity_type == 'movie':
+            year = request.form.get('year')
+            duration = request.form.get('duration')
+            in_cinema = request.form.get('filmInCinema') == 'on'
+            log.location = request.form.get('location_cinema') if in_cinema else None
+            log.companions = request.form.get('companions_cinema') if in_cinema else None
 
-            existing = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=log.name, year=year).first()
-
-            if not existing:
-                movie = Movie(name=log.name, year=year, duration=duration, imdb_id=imdb_id)
+            movie = None
+            if imdb_id:
+                movie = Movie.query.filter_by(imdb_id=imdb_id).first()
+            if not movie:
+                movie = Movie.query.filter_by(name=name, year=year).first()
+            if not movie:
+                movie = Movie(name=name, year=year, duration=duration, imdb_id=imdb_id)
                 db.session.add(movie)
                 db.session.flush()
-            else:
-                movie = existing
 
             log.movie_id = movie.id
+            log.name = name  # redundancy for logs table
 
-        elif log.activity_type == 'series':
+        elif activity_type == 'series':
             season = request.form.get('season')
             episode = request.form.get('episode')
-            imdb_id = request.form.get('imdb_id') or None
 
-            existing = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=log.name).first()
-
-            if not existing:
-                series = Series(name=log.name, imdb_id=imdb_id)
+            series = None
+            if imdb_id:
+                series = Series.query.filter_by(imdb_id=imdb_id).first()
+            if not series:
+                series = Series.query.filter_by(name=name).first()
+            if not series:
+                series = Series(name=name, imdb_id=imdb_id)
                 db.session.add(series)
                 db.session.flush()
-            else:
-                series = existing
 
             log.series_id = series.id
             log.season = season
             log.episode = episode
+            log.name = name
 
-        elif log.activity_type == 'match':
+        elif activity_type == 'match':
             if request.form.get('matchInStadium') == 'on':
                 log.location = request.form.get('location_match') or None
                 log.companions = request.form.get('companions_match') or None
+            log.name = name
 
-        elif log.activity_type == 'concert':
+        elif activity_type == 'concert':
             log.location = request.form.get('location_concert') or None
             log.companions = request.form.get('companions_concert') or None
+            log.name = name
+
+        else:
+            log.name = name  # appointment, reminder, other
 
         db.session.commit()
         return redirect(url_for('main.index'))

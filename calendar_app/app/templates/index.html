@@ -21,12 +21,17 @@
               {% for log in logs_by_date.get(day, []) %}
                 {% set size = 2 %}
                 {% if log.activity_type == 'match' and log.location %}
-                  {% set size = 8 %}
-                {% elif log.activity_type in event_styles %}
-                  {% set size = event_styles[log.activity_type]['size'] %}
+                  {% set size = 12 %}
+                {% elif log.activity_type == 'movie' and log.location %}
+                  {% set size = 5 %}
+                {% elif log.activity_type in activity_sizes %}
+                  {% set size = activity_sizes[log.activity_type] %}
                 {% endif %}
                 <div class="col-{{ size }}">
-                  <div class="position-relative p-2 text-white text-center rounded event-{{ log.activity_type }}">
+                  <div class="position-relative p-2 text-white text-center rounded 
+                              {% if log.activity_type == 'movie' and log.location %}event-cinema
+                              {% else %}event-{{ log.activity_type }}
+                              {% endif %} bg-gradient">
                     <div style="position: absolute; top: 2px; right: 4px; display: flex; gap: 4px;">
                       <a href="{{ url_for('main.edit_log', log_id=log.id) }}"
                          class="btn btn-sm btn-light d-flex align-items-center justify-content-center"
