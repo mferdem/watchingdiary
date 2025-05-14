@@ -3,7 +3,6 @@
 <div class="container">
   <h3 class="mb-4">Edit Log</h3>
   <form method="POST" action="{{ url_for('main.edit_log', log_id=log.id) }}">
-    <!-- GENERAL -->
     <div class="mb-3">
       <label class="form-label">Date</label>
       <input type="date" name="date" class="form-control" value="{{ log.date.strftime('%Y-%m-%d') }}" required>
@@ -11,17 +10,13 @@
 
     <div class="mb-3">
       <label class="form-label">Activity Type</label>
-      <select name="activity_type" class="form-select" id="activityType" required disabled>
-        {% set types = ['movie', 'series', 'match', 'concert', 'appointment', 'reminder', 'other'] %}
-        {% for t in types %}
-          <option value="{{ t }}" {% if log.activity_type == t %}selected{% endif %}>{{ t.capitalize() }}</option>
-        {% endfor %}
-      </select>
+      <input class="form-control" value="{{ log.activity_type }}" disabled>
     </div>
 
     <div class="mb-3">
       <label class="form-label">Title</label>
-      <input type="text" name="name" class="form-control" value="{% if log.movie %}{{ log.movie.name }}{% elif log.series %}{{ log.series.name }}{% else %}{{ log.name }}{% endif %}" required>
+      <input type="text" name="name" class="form-control"
+             value="{% if log.is_movie() %}{{ log.movie.name }}{% elif log.is_series() %}{{ log.series.name }}{% else %}{{ log.name }}{% endif %}" required>
     </div>
 
     <div class="mb-3">
@@ -29,7 +24,7 @@
       <textarea name="notes" class="form-control" rows="2">{{ log.notes }}</textarea>
     </div>
 
-    {% if log.activity_type == 'movie' %}
+    {% if log.is_movie() %}
       <div class="mb-3">
         <label class="form-label">Year</label>
         <input type="number" name="year" class="form-control" value="{{ log.movie.year or '' }}">
@@ -42,20 +37,26 @@
         <label class="form-label">IMDb ID</label>
         <input type="text" name="imdb_id" class="form-control" value="{{ log.movie.imdb_id or '' }}">
       </div>
+
+      {% set cinema = log.movie.cinema_viewings | selectattr('date', 'equalto', log.date) | list | first %}
       <div class="form-check mb-2">
-        <input class="form-check-input" type="checkbox" name="filmInCinema" id="movieInCinema" {% if log.location %}checked{% endif %}>
+        <input class="form-check-input" type="checkbox" name="filmInCinema" id="movieInCinema" {% if cinema %}checked{% endif %}>
         <label class="form-check-label" for="movieInCinema">Watched in cinema</label>
       </div>
       <div class="mb-3">
         <label class="form-label">Location</label>
-        <input type="text" name="location_cinema" class="form-control" value="{{ log.location or '' }}">
+        <input type="text" name="location_cinema" class="form-control" value="{{ cinema.location if cinema else '' }}">
       </div>
       <div class="mb-3">
         <label class="form-label">With whom?</label>
-        <input type="text" name="companions_cinema" class="form-control" value="{{ log.companions or '' }}">
+        <input type="text" name="companions_cinema" class="form-control" value="{{ cinema.companions if cinema else '' }}">
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Technology</label>
+        <input type="text" name="cinema_tech" class="form-control" value="{{ cinema.technology if cinema else '' }}">
       </div>
 
-    {% elif log.activity_type == 'series' %}
+    {% elif log.is_series() %}
       <div class="mb-3">
         <label class="form-label">Season</label>
         <input type="number" name="season" class="form-control" value="{{ log.season or '' }}">

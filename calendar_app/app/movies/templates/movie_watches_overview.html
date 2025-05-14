@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h3 class="mb-4">Yıllara Göre İzlenen Filmler (Toplam & Yeni)</h3>
+
+  <canvas id="stackedChart" height="100"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('stackedChart').getContext('2d');
+  const labels = {{ watch_years | tojson }};
+  const total = {{ watch_counts | tojson }};
+  const newOnes = {{ new_counts | tojson }};
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Yeni İzlenen Filmler',
+          data: newOnes,
+          backgroundColor: 'rgba(255, 99, 132, 0.7)',
+          stack: 'stack1'
+        },
+        {
+          label: 'Tekrar İzlemeler',
+          data: total.map((t, i) => t - (newOnes[i] || 0)),
+          backgroundColor: 'rgba(54, 162, 235, 0.7)',
+          stack: 'stack1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Her Yıl İzlenen Filmler (Yeni + Tekrar)'
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          title: { display: true, text: 'Yıl' }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          title: { display: true, text: 'Film Sayısı' }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

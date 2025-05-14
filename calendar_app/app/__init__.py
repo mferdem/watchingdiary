@@ -16,6 +16,9 @@ def create_app():
     migrate.init_app(app, db)
 
     from app.routes import main as main_blueprint
+    from .movies import movies_bp
+    
+    app.register_blueprint(movies_bp)
     app.register_blueprint(main_blueprint)
 
     return app

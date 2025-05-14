@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4">All Movies{% if selected_year %} - {{ selected_year }}{% endif %}</h3>
+
+  <div class="mb-4 text-center">
+    <div id="decadeButtons" class="mb-2 d-flex flex-wrap justify-content-center gap-2"
+          data-selected-decade="{{ selected_decade or '' }}"
+          data-selected-year="{{ selected_year or '' }}"></div>
+    <div id="yearButtons" class="d-flex flex-wrap justify-content-center gap-2"></div>
+  </div>
+
+  {% if movies %}
+  <div class="table-responsive">
+    <table id="moviesTable" class="table table-striped table-bordered align-middle text-center">
+      <thead class="table-dark">
+        <tr>
+          <th>#</th>
+          <th>Year</th>
+          <th>Title</th>
+          <th>Duration</th>
+          <th>Rating</th>
+          <th>Watch Count</th>
+          <th>Cinema Count</th>
+          <th>Last Watch</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in movies %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ item.movie.year or '-' }}</td>
+          <td class="fw-bold">
+            {% if item.movie.imdb_id %}
+              <a href="https://www.imdb.com/title/{{ item.movie.imdb_id }}" target="_blank" rel="noopener" class="text-decoration-none text-reset">
+                {{ item.movie.name }}
+              </a>
+            {% else %}
+              {{ item.movie.name }}
+            {% endif %}
+          </td>
+          <td data-order="{{ item.movie.duration or 0 }}">
+            {% if item.movie.duration %}
+              {{ item.movie.duration }} min /
+              {% set h = item.movie.duration // 60 %}
+              {% set m = item.movie.duration % 60 %}
+              {{ h }}h{% if m > 0 %} {{ m }}m{% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ item.movie.rating or '-' }}</td>
+          <td>{{ item.watch_count }}</td>
+          <td>{{ item.cinema_count }}</td>
+          <td data-order="{{ item.last_watch.strftime('%Y-%m-%d') if item.last_watch else '' }}">
+            {% if item.last_watch %}
+              {{ item.last_watch.strftime('%d %b %Y') }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info">No movies found.</div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/movie_filter.js') }}"></script>
+    <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.0/datatables.min.js" integrity="sha384-7E2OKZtVITDI4D1rSGuosH/FoHO2TXIKnqPuwhCqSwchDyfiznqbdb4wz4QX5FHj" crossorigin="anonymous"></script>
+    <script>
+    $(document).ready(function () {
+      $('#moviesTable').DataTable({
+        pageLength: 50,
+        lengthMenu: [10, 25, 50, 100],
+      });
+    });
+  </script>
+{% endblock %}

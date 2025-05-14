@@ -1,9 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import datetime, date
 from calendar import monthrange
-from app.models import db, Log, Movie, Series
-import csv
-import io
+from app.models import db, Log, Movie, Series, CinemaViewing
 from imdb import IMDb
 
 main = Blueprint('main', __name__)
@@ -44,8 +42,10 @@ def index():
         selected_month=selected_month,
         today=today,
         activity_sizes=activity_sizes,
-        months_tr=["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-                   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
+        months_tr=[
+            "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+            "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+        ]
     )
 
 @main.route('/add_log', methods=['POST'])
@@ -66,30 +66,35 @@ def add_log():
         duration = form.get('duration') or None
         year = form.get('year') or None
 
-        existing = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=log.name, year=year).first()
-
-        if not existing:
+        movie = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=log.name, year=year).first()
+        if not movie:
             movie = Movie(name=log.name, year=year, duration=duration, imdb_id=imdb_id)
             db.session.add(movie)
             db.session.flush()
-        else:
-            movie = existing
 
         log.movie_id = movie.id
 
+        if form.get('filmInCinema') == 'on':
+            cinema = CinemaViewing(
+                movie_id=movie.id,
+                log=log,
+                date=log.date,
+                location=form.get('location_cinema'),
+                companions=form.get('companions_cinema'),
+                technology=form.get('cinema_tech') or None
+            )
+            db.session.add(cinema)
+
     elif activity_type == 'series':
+        imdb_id = form.get('imdb_id') or None
         season = form.get('season')
         episode = form.get('episode')
-        imdb_id = form.get('imdb_id') or None
 
-        existing = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=log.name).first()
-
-        if not existing:
+        series = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=log.name).first()
+        if not series:
             series = Series(name=log.name, imdb_id=imdb_id)
             db.session.add(series)
             db.session.flush()
-        else:
-            series = existing
 
         log.series_id = series.id
         log.season = season
@@ -97,12 +102,12 @@ def add_log():
 
     elif activity_type == 'match':
         if form.get('matchInStadium') == 'on':
-            log.location = form.get('location_match') or None
-            log.companions = form.get('companions_match') or None
+            log.location = form.get('location_match')
+            log.companions = form.get('companions_match')
 
     elif activity_type == 'concert':
-        log.location = form.get('location_concert') or None
-        log.companions = form.get('companions_concert') or None
+        log.location = form.get('location_concert')
+        log.companions = form.get('companions_concert')
 
     db.session.add(log)
     db.session.commit()
@@ -115,8 +120,7 @@ def edit_log(log_id):
     if request.method == 'POST':
         log.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
         log.notes = request.form.get('notes', '').strip()
-        activity_type = log.activity_type  # değiştirilemez
-
+        activity_type = log.activity_type
         name = request.form.get('name', '').strip()
         imdb_id = request.form.get('imdb_id') or None
 
@@ -131,31 +135,34 @@ def edit_log(log_id):
             year = request.form.get('year')
             duration = request.form.get('duration')
             in_cinema = request.form.get('filmInCinema') == 'on'
-            log.location = request.form.get('location_cinema') if in_cinema else None
-            log.companions = request.form.get('companions_cinema') if in_cinema else None
 
-            movie = None
-            if imdb_id:
-                movie = Movie.query.filter_by(imdb_id=imdb_id).first()
-            if not movie:
-                movie = Movie.query.filter_by(name=name, year=year).first()
+            movie = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=name, year=year).first()
             if not movie:
                 movie = Movie(name=name, year=year, duration=duration, imdb_id=imdb_id)
                 db.session.add(movie)
                 db.session.flush()
 
             log.movie_id = movie.id
-            log.name = name  # redundancy for logs table
+            log.name = name
+
+            CinemaViewing.query.filter_by(log_id=log.id).delete()
+
+            if in_cinema:
+                cinema = CinemaViewing(
+                    movie_id=movie.id,
+                    log=log,
+                    date=log.date,
+                    location=request.form.get('location_cinema'),
+                    companions=request.form.get('companions_cinema'),
+                    technology=request.form.get('cinema_tech') or None
+                )
+                db.session.add(cinema)
 
         elif activity_type == 'series':
             season = request.form.get('season')
             episode = request.form.get('episode')
 
-            series = None
-            if imdb_id:
-                series = Series.query.filter_by(imdb_id=imdb_id).first()
-            if not series:
-                series = Series.query.filter_by(name=name).first()
+            series = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=name).first()
             if not series:
                 series = Series(name=name, imdb_id=imdb_id)
                 db.session.add(series)
@@ -168,17 +175,17 @@ def edit_log(log_id):
 
         elif activity_type == 'match':
             if request.form.get('matchInStadium') == 'on':
-                log.location = request.form.get('location_match') or None
-                log.companions = request.form.get('companions_match') or None
+                log.location = request.form.get('location_match')
+                log.companions = request.form.get('companions_match')
             log.name = name
 
         elif activity_type == 'concert':
-            log.location = request.form.get('location_concert') or None
-            log.companions = request.form.get('companions_concert') or None
+            log.location = request.form.get('location_concert')
+            log.companions = request.form.get('companions_concert')
             log.name = name
 
         else:
-            log.name = name  # appointment, reminder, other
+            log.name = name
 
         db.session.commit()
         return redirect(url_for('main.index'))
@@ -191,34 +198,3 @@ def delete_log(log_id):
     log.status = 0
     db.session.commit()
     return redirect(url_for('main.index'))
-
-@main.route('/movies')
-def movie_list():
-    year = request.args.get('year', type=int)
-
-    movies_query = Movie.query
-    if year:
-        movies_query = movies_query.filter(Movie.year == year)
-
-    movies = movies_query.order_by(Movie.year.desc().nullslast(), Movie.name.asc()).all()
-
-    enriched_movies = []
-    for movie in movies:
-        logs = Log.query.filter_by(movie_id=movie.id, activity_type='movie', status=1).all()
-        watch_count = len(logs)
-        # cinema_count ve filmincinema kaldırıldıysa bu satırı çıkar:
-        cinema_count = sum(1 for log in logs if log.location)  # örnek varsayım
-        last_watch = max((log.date for log in logs if log.date), default=None)
-
-        enriched_movies.append({
-            'movie': movie,
-            'watch_count': watch_count,
-            'cinema_count': cinema_count,
-            'last_watch': last_watch
-        })
-
-    return render_template(
-        'movie_list.html',
-        movies=enriched_movies,
-        selected_year=year
-    )

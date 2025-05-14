@@ -5,6 +5,8 @@
     <title>Calendar App</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link href="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.0/datatables.min.css" rel="stylesheet" integrity="sha384-Thi088Uu3nHTydtNDcs0z6Qg/b9FiwyKET9qezjy1Pv94INJSvcM7LboEMd/aWSE" crossorigin="anonymous">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Updock&display=swap" rel="stylesheet">
@@ -24,7 +26,7 @@
           <a class="navbar-brand m-0" href="{{ url_for('main.index') }}">
             nobody exists on purpose. nobody belongs anywhere. everybody's gonna die. come watch tv?
           </a>
-          <a class="btn btn-outline-light btn-sm ms-auto me-2" href="{{ url_for('main.movie_list') }}">All Movies</a>
+          <a class="btn btn-outline-light btn-sm ms-auto me-2" href="{{ url_for('movies.movie_list') }}">All Movies</a>
         </div>
     </nav>
 
@@ -33,8 +35,7 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/omdb_config.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/log_modal_behavior.js') }}"></script>
-
+    {% block scripts %}{% endblock %}    
+    
 </body>
 </html>

@@ -19,17 +19,20 @@
           <td>
             <div class="row gx-2 gy-2">
               {% for log in logs_by_date.get(day, []) %}
+                {% set is_cinema = log.is_movie() and log.movie and log.movie.cinema_viewings|selectattr("date", "equalto", log.date)|list|length > 0 %}
+
                 {% set size = 2 %}
                 {% if log.activity_type == 'match' and log.location %}
                   {% set size = 12 %}
-                {% elif log.activity_type == 'movie' and log.location %}
+                {% elif is_cinema %}
                   {% set size = 5 %}
                 {% elif log.activity_type in activity_sizes %}
                   {% set size = activity_sizes[log.activity_type] %}
                 {% endif %}
+
                 <div class="col-{{ size }}">
                   <div class="position-relative p-2 text-white text-center rounded 
-                              {% if log.activity_type == 'movie' and log.location %}event-cinema
+                              {% if is_cinema %}event-cinema
                               {% else %}event-{{ log.activity_type }}
                               {% endif %} bg-gradient">
                     <div style="position: absolute; top: 2px; right: 4px; display: flex; gap: 4px;">
@@ -74,4 +77,9 @@
 </button>
 
 {% include 'modals/new_log_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/omdb_config.js') }}"></script>
+<script src="{{ url_for('static', filename='js/log_modal_behavior.js') }}"></script>
 {% endblock %}

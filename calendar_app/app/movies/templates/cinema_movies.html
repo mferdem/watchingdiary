@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4">Watched in Cinema</h3>
+
+  {% if entries %}
+    <table class="table table-striped text-center align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Date</th>
+          <th>Movie</th>
+          <th>Location</th>
+          <th>With</th>
+          <th>Technology</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+          <tr>
+            <td>{{ entry.date.strftime('%d %b %Y') }}</td>
+            <td>
+              {% if entry.movie.imdb_id %}
+                <a href="https://www.imdb.com/title/{{ entry.movie.imdb_id }}" target="_blank">
+                  {{ entry.movie.name }}
+                </a>
+              {% else %}
+                {{ entry.movie.name }}
+              {% endif %}
+            </td>
+            <td>{{ entry.location or '-' }}</td>
+            <td>{{ entry.companions or '-' }}</td>
+            <td>{{ entry.technology or '-' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="alert alert-info">No cinema viewings found.</div>
+  {% endif %}
+</div>
+{% endblock %}
