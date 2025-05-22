@@ -51,7 +51,14 @@
 
                     <div class="pe-3 text-truncate">
                       {% if log.is_movie() %}
-                        {{ log.movie.name }}{% if log.movie.year %} ({{ log.movie.year }}){% endif %}
+                        {{ log.movie.name }}
+                        {% if log.movie.year %} ({{ log.movie.year }}){% endif %}
+                        {% set cinema = log.movie.cinema_viewings | selectattr('date', 'equalto', log.date) | list | first %}
+                        {% if cinema and (cinema.technology or cinema.location) %}
+                        {% if cinema.technology %}— {{ cinema.technology }}{% endif %}
+                        {% if cinema.location %} @{{ cinema.location }}{% endif %}
+                        {% endif %}
+
                       {% elif log.is_series() %}
                         {{ log.series.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
                       {% elif log.activity_type == 'match' %}
@@ -65,6 +72,7 @@
                       {% else %}
                         {{ log.name }}
                       {% endif %}
+
                     </div>
                   </div>
                 </div>

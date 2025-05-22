@@ -135,8 +135,5 @@ calendar_app/app/static/js/omdb_config.js
 migrations/
 .vscode/settings.json
 
-calendar_app/app/static/js/omdb_config.js
-calendar_app/app/static/js/omdb_config.js
-
-
-/static/img/posters/
+# movie posters
+calendar_app/app/static/img/posters/
