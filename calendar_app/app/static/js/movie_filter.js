@@ -9,6 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const selectedYear = parseInt(decadeButtonsDiv.dataset.selectedYear || '0');
   const selectedDecade = parseInt(decadeButtonsDiv.dataset.selectedDecade || '0');
 
+  // --- PATH DETECTION ---
+  function getBasePath() {
+    // /movies/list, /movies/grid gibi
+    const path = window.location.pathname;
+    // Eğer /movies/list veya /movies/grid ile başlıyorsa
+    if (path.startsWith('/movies/grid')) return '/movies/grid';
+    if (path.startsWith('/movies/list')) return '/movies/list';
+    // Default
+    return '/movies/list';
+  }
+
+  function goToFilter(param, value) {
+    const basePath = getBasePath();
+    const url = `${basePath}?${param}=${value}`;
+    window.location.href = url;
+  }
+
   function createYearButtons(decade) {
     yearButtonsDiv.innerHTML = '';
 
@@ -24,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (year === selectedYear) chip.classList.add('active');
 
       chip.addEventListener('click', () => {
-        window.location.href = `/movies/list?year=${year}`;
+        goToFilter('year', year);
       });
 
       yearButtonsDiv.appendChild(chip);
@@ -40,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (decade === selectedDecade) chip.classList.add('active');
 
     chip.addEventListener('click', () => {
-      window.location.href = `/movies/list?decade=${decade}`;
+      goToFilter('decade', decade);
     });
 
     decadeButtonsDiv.appendChild(chip);

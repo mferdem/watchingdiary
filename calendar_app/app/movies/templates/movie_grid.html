@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4 text-center">Movie Gallery</h3>
+
+  <!-- Decade & Year Filter Chips -->
+  <div class="mb-3 text-center">
+    <div id="decadeButtons" class="mb-2 d-flex flex-wrap justify-content-center gap-2"
+         data-selected-decade="{{ selected_decade or '' }}"
+         data-selected-year="{{ selected_year or '' }}"></div>
+    <div id="yearButtons" class="d-flex flex-wrap justify-content-center gap-2"></div>
+  </div>
+
+  <!-- Movie Grid -->
+  <div id="movieGrid" class="row g-4"></div>
+
+  <!-- Pagination -->
+  <nav>
+    <ul class="pagination justify-content-center mt-4" id="pagination"></ul>
+  </nav>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/movie_filter.js') }}"></script>
+<script>
+let selectedYear = {{ selected_year or 'null' }};
+let selectedDecade = {{ selected_decade or 'null' }};
+let selectedPage = {{ selected_page or 1 }};
+const pageSize = 36;
+
+function fetchMovies(page = 1) {
+  let params = new URLSearchParams();
+  if (selectedYear) params.append('year', selectedYear);
+  if (selectedDecade) params.append('decade', selectedDecade);
+  params.append('page', page);
+
+  fetch('/movies/grid/data?' + params.toString())
+    .then(response => response.json())
+    .then(data => {
+      renderMovieGrid(data.movies);
+      renderPagination(data.total, data.page, data.page_size);
+    });
+}
+
+function renderMovieGrid(movies) {
+  const grid = document.getElementById('movieGrid');
+  grid.innerHTML = '';
+  if (movies.length === 0) {
+    grid.innerHTML = '<div class="text-center text-muted">No movies found.</div>';
+    return;
+  }
+  movies.forEach(movie => {
+    const posterUrl = `/static/img/posters/${movie.imdb_id}.jpg`;
+    const movieCard = `
+      <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+        <div class="card shadow-sm h-100 border-0">
+          <img src="${posterUrl}" class="card-img-top" alt="${movie.name}" style="aspect-ratio:2/3; object-fit:cover; background:#f0f0f0;">
+          <div class="card-body px-2 py-2 text-center">
+            <div class="fw-bold small" style="min-height:2.5em">${movie.name}</div>
+            <div class="text-secondary small">${movie.year}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    grid.insertAdjacentHTML('beforeend', movieCard);
+  });
+}
+
+function renderPagination(total, currentPage, pageSize) {
+  const totalPages = Math.ceil(total / pageSize);
+  const pag = document.getElementById('pagination');
+  pag.innerHTML = '';
+  if (totalPages <= 1) return;
+
+  for (let i = 1; i <= totalPages; i++) {
+    pag.innerHTML += `
+      <li class="page-item ${i === currentPage ? 'active' : ''}">
+        <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
+      </li>
+    `;
+  }
+}
+
+function goToPage(page) {
+  selectedPage = page;
+  fetchMovies(page);
+}
+
+// Decade/year chip script çalışınca filtre değişirse:
+window.setDecadeFilter = function(decade) {
+  selectedDecade = decade;
+  selectedYear = null;
+  selectedPage = 1;
+  fetchMovies(1);
+};
+window.setYearFilter = function(year) {
+  selectedYear = year;
+  selectedDecade = null;
+  selectedPage = 1;
+  fetchMovies(1);
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchMovies(selectedPage);
+});
+</script>
+{% endblock %}

@@ -3,7 +3,7 @@ from app.models import Movie  # Projenizdeki import yoluna göre güncelleyin
 from app import db
 from app.models import db, Log, Movie, CinemaViewing
 from app.utils import measure_time
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, and_
 from sqlalchemy.orm import aliased
 
 
@@ -197,3 +197,46 @@ def watch_year_distribution():
         projected_watch=projected_watch,
         projected_new=projected_new
     )
+
+@movies_bp.route('/grid')
+def movie_grid():
+    # Filtre parametrelerini al
+    year = request.args.get('year', type=int)
+    decade = request.args.get('decade', type=int)
+    page = request.args.get('page', 1, type=int)
+    return render_template('movie_grid.html',
+                           selected_year=year,
+                           selected_decade=decade,
+                           selected_page=page)
+
+@movies_bp.route('/grid/data')
+def movie_grid_data():
+    year = request.args.get('year', type=int)
+    decade = request.args.get('decade', type=int)
+    page = request.args.get('page', 1, type=int)
+    page_size = 36
+
+    # Sorgu oluştur
+    query = Movie.query
+    if year:
+        query = query.filter(Movie.year == year)
+    elif decade:
+        query = query.filter(and_(Movie.year >= decade, Movie.year < decade + 10))
+
+    total = query.count()
+    movies = query.order_by(Movie.year.desc()).offset((page - 1) * page_size).limit(page_size).all()
+
+    results = []
+    for m in movies:
+        results.append({
+            'name': m.name,
+            'year': m.year,
+            'imdb_id': m.imdb_id
+        })
+
+    return jsonify({
+        'movies': results,
+        'total': total,
+        'page': page,
+        'page_size': page_size
+    })
