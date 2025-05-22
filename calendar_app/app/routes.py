@@ -7,10 +7,10 @@ from imdb import IMDb
 main = Blueprint('main', __name__)
 
 activity_sizes = {
-    'movie': 3,
-    'series': 2,
-    'match': 5,
-    'concert': 8,
+    'movie': 4,
+    'series': 3,
+    'match': 6,
+    'concert': 6,
     'appointment': 8,
     'reminder': 4,
     'other': 4

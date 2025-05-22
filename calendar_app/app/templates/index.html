@@ -13,7 +13,8 @@
     <tbody>
       {% for day in days %}
         <tr>
-          <td style="white-space: nowrap; font-size: 0.9rem; text-align: right; vertical-align: middle;">
+          <td {% if day.strftime('%d%m') == '1609' %} class="bg-danger text-white" {% endif %}
+          style="white-space: nowrap; font-size: 0.9rem; text-align: right; vertical-align: middle;">
             {{ day.strftime("%d %B '%y %A") }}
           </td>
           <td>
@@ -21,11 +22,11 @@
               {% for log in logs_by_date.get(day, []) %}
                 {% set is_cinema = log.is_movie() and log.movie and log.movie.cinema_viewings|selectattr("date", "equalto", log.date)|list|length > 0 %}
 
-                {% set size = 2 %}
+                {% set size = 4 %}
                 {% if log.activity_type == 'match' and log.location %}
                   {% set size = 12 %}
                 {% elif is_cinema %}
-                  {% set size = 5 %}
+                  {% set size = 6 %}
                 {% elif log.activity_type in activity_sizes %}
                   {% set size = activity_sizes[log.activity_type] %}
                 {% endif %}
@@ -54,6 +55,10 @@
                       {% elif log.is_series() %}
                         {{ log.series.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
                       {% elif log.activity_type == 'match' %}
+                        {% if 'beşiktaş' in log.name|lower %}
+                          <img src="{{ url_for('static', filename='img/bjk.svg') }}"
+                          alt="Beşiktaş" style="height: 20px; margin-right: 5px;">
+                        {% endif %}
                         {{ log.name }}{% if log.location %} @{{ log.location }}{% endif %}
                       {% elif log.activity_type == 'concert' %}
                         {{ log.name }}{% if log.location %} @{{ log.location }}{% endif %}

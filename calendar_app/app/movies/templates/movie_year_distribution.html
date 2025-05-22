@@ -1,8 +1,14 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="container mt-5">
-  <h3>Filmlerin Yıllara Göre Dağılımı</h3>
-  <canvas id="yearChart" width="400" height="150"></canvas>
+<div class="container mt-5 text-center">
+  <h3 class="fw-bold">Movies Watched by Release Year</h3>
+</div>
+{% endblock %}
+
+{% block graph %}
+<div class="container-fluid px-0" style="height: 80vh;">
+  <canvas id="yearChart"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,13 +27,23 @@
       }]
     },
     options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         x: {
-          title: { display: true, text: 'Yıl' }
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45
+          },
+          title: { display: true, text: 'Year' }
         },
         y: {
           beginAtZero: true,
-          title: { display: true, text: 'Film Sayısı' }
+          title: { display: true, text: 'Movie Count' }
         }
       }
     }

@@ -22,16 +22,25 @@
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark mb-2">
-        <div class="container-fluid justify-content-center">
-          <a class="navbar-brand m-0" href="{{ url_for('main.index') }}">
-            nobody exists on purpose. nobody belongs anywhere. everybody's gonna die. come watch tv?
-          </a>
-          <a class="btn btn-outline-light btn-sm ms-auto me-2" href="{{ url_for('movies.movie_list') }}">All Movies</a>
+      <div class="container-fluid justify-content-center">
+        <a class="navbar-brand m-0" href="{{ url_for('main.index') }}">
+          nobody exists on purpose. nobody belongs anywhere. everybody's gonna die. come watch tv?
+        </a>
+        <div class="ms-auto d-flex gap-2">
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('movies.movie_list') }}">All Movies</a>
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('movies.cinema_movies') }}">Cinema</a>
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('movies.movie_year_distribution') }}">Movie Year Distr.</a>
+          <a class="btn btn-outline-light btn-sm" href="{{ url_for('movies.watch_year_distribution') }}">Watch Year Distr.</a>
         </div>
+      </div>
     </nav>
 
     <div class="container-fluid">
         {% block content %}{% endblock %}
+    </div>
+
+    <div class="card border-0">
+        {% block graph %}{% endblock %}
     </div>
 
     <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>

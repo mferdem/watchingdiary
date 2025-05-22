@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 text-center">
+  <h3 class="fw-bold">Movies Watched by Year (New vs Rewatched)</h3>
+</div>
+{% endblock %}
+
+{% block graph %}
+<div class="container-fluid px-0" style="height: 80vh;">
+  <canvas id="stackedChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('stackedChart').getContext('2d');
+  const labels = {{ watch_years | tojson }};
+  const total = {{ watch_counts | tojson }};
+  const newOnes = {{ new_counts | tojson }};
+  const currentYear = {{ current_year }};
+  const projectedWatch = {{ projected_watch }};
+  const projectedNew = {{ projected_new }};
+
+  // Eğer mevcut yıl son eleman değilse sonuna ekleyelim
+  if (!labels.includes(currentYear)) {
+    labels.push(currentYear);
+    total.push(0);
+    newOnes.push(0);
+  }
+
+  const projectionOffset = 0.25;  // Biraz sola kaydırmak için
+  const projectionIndex = labels.indexOf(currentYear);
+
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'New Watches',
+          data: newOnes,
+          backgroundColor: 'rgba(255, 99, 132, 0.7)',
+          stack: 'stack1'
+        },
+        {
+          label: 'Rewatches',
+          data: total.map((t, i) => t - (newOnes[i] || 0)),
+          backgroundColor: 'rgba(54, 162, 235, 0.7)',
+          stack: 'stack1'
+        },
+        {
+          label: 'Projected New',
+          data: labels.map((_, i) => i === projectionIndex ? projectedNew : null),
+          backgroundColor: 'rgba(255, 99, 132, 0.3)',
+          stack: 'stack1',
+          borderWidth: 1,
+          borderDash: [5, 5]
+        },
+        {
+          label: 'Projected Rewatches',
+          data: labels.map((_, i) => i === projectionIndex ? projectedWatch - projectedNew : null),
+          backgroundColor: 'rgba(54, 162, 235, 0.3)',
+          stack: 'stack1',
+          borderWidth: 1,
+          borderDash: [5, 5]
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Movies Watched per Year (with Projection)'
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          title: { display: true, text: 'Year' }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          title: { display: true, text: 'Number of Movies' }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

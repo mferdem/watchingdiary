@@ -3,6 +3,8 @@ from app.models import Movie  # Projenizdeki import yoluna göre güncelleyin
 from app import db
 from app.models import db, Log, Movie, CinemaViewing
 from app.utils import measure_time
+from sqlalchemy import func, desc
+from sqlalchemy.orm import aliased
 
 
 movies_bp = Blueprint('movies', __name__, template_folder='templates', url_prefix='/movies')
@@ -29,9 +31,32 @@ def movie_data():
     search_value = request.form.get('search[value]', '')
     order_column_index = int(request.form.get('order[0][column]', 1))
     order_direction = request.form.get('order[0][dir]', 'asc')
-
     year = request.form.get('year', type=int)
     decade = request.form.get('decade', type=int)
+
+    # Alias'lar
+    log_alias = aliased(Log)
+    cinema_alias = aliased(CinemaViewing)
+
+    # Sorgu
+    query = db.session.query(
+        Movie,
+        func.count(log_alias.id).label('watch_count'),
+        func.count(cinema_alias.id).label('cinema_count'),
+        func.max(log_alias.date).label('last_watch')
+    ).outerjoin(log_alias, (log_alias.movie_id == Movie.id) & (log_alias.status == 1) & (log_alias.activity_type == 'movie')) \
+     .outerjoin(cinema_alias, cinema_alias.movie_id == Movie.id) \
+     .group_by(Movie.id)
+
+    # Arama filtresi
+    if search_value:
+        query = query.filter(Movie.name.ilike(f'%{search_value}%'))
+
+    # Yıl / on yıl filtreleri
+    if year:
+        query = query.filter(Movie.year == year)
+    elif decade:
+        query = query.filter(Movie.year >= decade, Movie.year < decade + 10)
 
     # Kolon sıralama haritası
     column_map = {
@@ -39,48 +64,31 @@ def movie_data():
         1: Movie.year,
         2: Movie.name,
         3: Movie.duration,
+        4: 'watch_count',
+        5: 'cinema_count',
+        6: 'last_watch'
     }
 
-    # Ana sorgu
-    query = db.session.query(Movie)
-
-    if search_value:
-        query = query.filter(Movie.name.ilike(f'%{search_value}%'))
-
-    if year:
-        query = query.filter(Movie.year == year)
-    elif decade:
-        query = query.filter(Movie.year >= decade, Movie.year < decade + 10)
+    # Sıralama uygulama
+    col = column_map.get(order_column_index, Movie.id)
+    if isinstance(col, str):  # türetilmiş alan
+        query = query.order_by(desc(col)) if order_direction == 'desc' else query.order_by(col)
+    else:  # doğrudan kolon
+        query = query.order_by(col.desc() if order_direction == 'desc' else col.asc())
 
     total_records = query.count()
+    rows = query.offset(start).limit(length).all()
 
-    # Sıralama
-    if order_column_index in column_map:
-        column = column_map[order_column_index]
-        if order_direction == 'desc':
-            query = query.order_by(column.desc())
-        else:
-            query = query.order_by(column.asc())
-    else:
-        query = query.order_by(Movie.id.desc())
-
-    # Sayfalama
-    movies = query.offset(start).limit(length).all()
-
-    # Cevap datası
     data = []
-    for idx, movie in enumerate(movies, start=start + 1):
-        logs = Log.query.filter_by(movie_id=movie.id, activity_type='movie', status=1).all()
-        cinema_count = CinemaViewing.query.filter_by(movie_id=movie.id).count()
-        last_watch = max((log.date for log in logs if log.date), default=None)
-
+    for idx, row in enumerate(rows, start=start + 1):
+        movie, watch_count, cinema_count, last_watch = row
         data.append({
             'index': idx,
             'year': movie.year,
             'title': f'<a href="https://www.imdb.com/title/{movie.imdb_id}" target="_blank" rel="noopener" class="text-decoration-none text-reset fw-bold">{movie.name}</a>'
                      if movie.imdb_id else movie.name,
             'duration': f"{movie.duration} min" if movie.duration else "-",
-            'watch_count': len(logs),
+            'watch_count': watch_count,
             'cinema_count': cinema_count,
             'last_watch': last_watch.strftime('%d %b %Y') if last_watch else '-'
         })
@@ -100,26 +108,38 @@ def cinema_movies():
 
     return render_template('cinema_movies.html', entries=viewings)
 
-@movies_bp.route('/year-distribution')
+@movies_bp.route('/movie-year-distribution')
 def movie_year_distribution():
-    data = (
+    raw_data = (
         db.session.query(Movie.year, db.func.count(Movie.id))
         .group_by(Movie.year)
         .order_by(Movie.year)
         .all()
     )
-    years = [year for year, count in data if year is not None]
-    counts = [count for year, count in data if year is not None]
+
+    year_counts = {year: count for year, count in raw_data if year is not None}
+
+    min_year = min(year_counts.keys())
+    max_year = max(year_counts.keys())
+
+    years = list(range(min_year, max_year + 1))
+    counts = [year_counts.get(year, 0) for year in years]
 
     return render_template('movie_year_distribution.html', years=years, counts=counts)
 
 
-@movies_bp.route('/watches-overview')
-def watches_overview():
+@movies_bp.route('/watch-year-distribution')
+def watch_year_distribution():
     from app.models import Log
     from sqlalchemy import func, extract
+    from datetime import datetime
 
-    # 1. Toplam izlenme (log bazlı)
+    current_year = datetime.now().year
+    today_day_of_year = datetime.now().timetuple().tm_yday
+    total_days_in_year = 366 if (current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0)) else 365
+    year_progress = today_day_of_year / total_days_in_year
+
+    # 1. Toplam izlenme
     watch_data = (
         db.session.query(
             extract('year', Log.date).label('year'),
@@ -133,7 +153,7 @@ def watches_overview():
     watch_years = [int(row.year) for row in watch_data]
     watch_counts = [row.count for row in watch_data]
 
-    # 2. İlk izlenme (her film için en erken tarih)
+    # 2. İlk izlenme
     subquery = (
         db.session.query(
             Log.movie_id,
@@ -143,7 +163,6 @@ def watches_overview():
         .group_by(Log.movie_id)
         .subquery()
     )
-
     new_data = (
         db.session.query(
             extract('year', subquery.c.first_watch).label('year'),
@@ -156,10 +175,25 @@ def watches_overview():
     new_years = [int(row.year) for row in new_data]
     new_counts = [row.count for row in new_data]
 
+    # 3. Tahmin: sadece bu yıla ait olanları hesapla
+    projected_watch = 0
+    projected_new = 0
+
+    if current_year in watch_years:
+        current_count = watch_counts[watch_years.index(current_year)]
+        projected_watch = round(current_count / year_progress)
+
+    if current_year in new_years:
+        current_new = new_counts[new_years.index(current_year)]
+        projected_new = round(current_new / year_progress)
+
     return render_template(
-        'movie_watches_overview.html',
+        'watch_year_distribution.html',
         watch_years=watch_years,
         watch_counts=watch_counts,
         new_years=new_years,
-        new_counts=new_counts
+        new_counts=new_counts,
+        current_year=current_year,
+        projected_watch=projected_watch,
+        projected_new=projected_new
     )
