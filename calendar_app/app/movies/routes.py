@@ -3,8 +3,9 @@ from app.models import Movie  # Projenizdeki import yoluna göre güncelleyin
 from app import db
 from app.models import db, Log, Movie, CinemaViewing
 from app.utils import measure_time
-from sqlalchemy import func, desc, and_
+from sqlalchemy import func, desc, and_, extract
 from sqlalchemy.orm import aliased
+from datetime import datetime
 
 
 movies_bp = Blueprint('movies', __name__, template_folder='templates', url_prefix='/movies')
@@ -23,7 +24,6 @@ def movie_list():
 
 
 @movies_bp.route('/data', methods=['POST'])
-@measure_time
 def movie_data():
     draw = int(request.form.get('draw', 1))
     start = int(request.form.get('start', 0))
@@ -34,31 +34,38 @@ def movie_data():
     year = request.form.get('year', type=int)
     decade = request.form.get('decade', type=int)
 
-    # Alias'lar
     log_alias = aliased(Log)
     cinema_alias = aliased(CinemaViewing)
 
-    # Sorgu
+    # Temel Movie sorgusu (toplam kayıt sayısı için)
+    base_query = db.session.query(Movie)
+    if search_value:
+        base_query = base_query.filter(Movie.name.ilike(f'%{search_value}%'))
+    if year:
+        base_query = base_query.filter(Movie.year == year)
+    elif decade:
+        base_query = base_query.filter(Movie.year >= decade, Movie.year < decade + 10)
+    total_records = base_query.count()
+
+    # Ana veri sorgusu
     query = db.session.query(
         Movie,
-        func.count(log_alias.id).label('watch_count'),
-        func.count(cinema_alias.id).label('cinema_count'),
+        func.count(db.distinct(log_alias.id)).label('watch_count'),
+        func.count(db.distinct(cinema_alias.id)).label('cinema_count'),
         func.max(log_alias.date).label('last_watch')
     ).outerjoin(log_alias, (log_alias.movie_id == Movie.id) & (log_alias.status == 1) & (log_alias.activity_type == 'movie')) \
-     .outerjoin(cinema_alias, cinema_alias.movie_id == Movie.id) \
-     .group_by(Movie.id)
+     .outerjoin(cinema_alias, cinema_alias.movie_id == Movie.id)
 
-    # Arama filtresi
     if search_value:
         query = query.filter(Movie.name.ilike(f'%{search_value}%'))
-
-    # Yıl / on yıl filtreleri
     if year:
         query = query.filter(Movie.year == year)
     elif decade:
         query = query.filter(Movie.year >= decade, Movie.year < decade + 10)
 
-    # Kolon sıralama haritası
+    query = query.group_by(Movie.id)
+
+    # Sıralama için kolon eşlemesi (senin istediğin gibi)
     column_map = {
         0: Movie.id,
         1: Movie.year,
@@ -66,17 +73,19 @@ def movie_data():
         3: Movie.duration,
         4: 'watch_count',
         5: 'cinema_count',
-        6: 'last_watch'
+        6: Movie.my_rating,
+        7: 'last_watch'
     }
 
-    # Sıralama uygulama
     col = column_map.get(order_column_index, Movie.id)
-    if isinstance(col, str):  # türetilmiş alan
-        query = query.order_by(desc(col)) if order_direction == 'desc' else query.order_by(col)
-    else:  # doğrudan kolon
+    if isinstance(col, str):
+        if order_direction == 'desc':
+            query = query.order_by(db.desc(col))
+        else:
+            query = query.order_by(col)
+    else:
         query = query.order_by(col.desc() if order_direction == 'desc' else col.asc())
 
-    total_records = query.count()
     rows = query.offset(start).limit(length).all()
 
     data = []
@@ -90,6 +99,7 @@ def movie_data():
             'duration': f"{movie.duration} min" if movie.duration else "-",
             'watch_count': watch_count,
             'cinema_count': cinema_count,
+            'my_rating': int(movie.my_rating) if movie.my_rating is not None else 0,
             'last_watch': last_watch.strftime('%d %b %Y') if last_watch else '-'
         })
 
@@ -130,10 +140,6 @@ def movie_year_distribution():
 
 @movies_bp.route('/watch-year-distribution')
 def watch_year_distribution():
-    from app.models import Log
-    from sqlalchemy import func, extract
-    from datetime import datetime
-
     current_year = datetime.now().year
     today_day_of_year = datetime.now().timetuple().tm_yday
     total_days_in_year = 366 if (current_year % 4 == 0 and (current_year % 100 != 0 or current_year % 400 == 0)) else 365
@@ -153,13 +159,14 @@ def watch_year_distribution():
     watch_years = [int(row.year) for row in watch_data]
     watch_counts = [row.count for row in watch_data]
 
-    # 2. İlk izlenme
+    # 2. İlk izlenme (YENİ: id >= 10286 olan filmler)
     subquery = (
         db.session.query(
             Log.movie_id,
             func.min(Log.date).label('first_watch')
         )
-        .filter(Log.activity_type == 'movie')
+        .join(Movie, Log.movie_id == Movie.id)
+        .filter(Log.activity_type == 'movie', Movie.id >= 10286)
         .group_by(Log.movie_id)
         .subquery()
     )
@@ -181,11 +188,11 @@ def watch_year_distribution():
 
     if current_year in watch_years:
         current_count = watch_counts[watch_years.index(current_year)]
-        projected_watch = round(current_count / year_progress)
+        projected_watch = round(current_count / year_progress - current_count) 
 
     if current_year in new_years:
         current_new = new_counts[new_years.index(current_year)]
-        projected_new = round(current_new / year_progress)
+        projected_new = round(current_new / year_progress - current_new)
 
     return render_template(
         'watch_year_distribution.html',
@@ -214,7 +221,7 @@ def movie_grid_data():
     year = request.args.get('year', type=int)
     decade = request.args.get('decade', type=int)
     page = request.args.get('page', 1, type=int)
-    page_size = 36
+    page_size = 18
 
     # Sorgu oluştur
     query = Movie.query
@@ -224,7 +231,7 @@ def movie_grid_data():
         query = query.filter(and_(Movie.year >= decade, Movie.year < decade + 10))
 
     total = query.count()
-    movies = query.order_by(Movie.year.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    movies = query.order_by(Movie.id.desc()).offset((page - 1) * page_size).limit(page_size).all()
 
     results = []
     for m in movies:

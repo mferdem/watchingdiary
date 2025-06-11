@@ -17,7 +17,13 @@
       <tbody>
         {% for entry in entries %}
           <tr>
-            <td>{{ entry.date.strftime('%d %b %Y') }}</td>
+            <td>
+              {% if entry.date %}
+                {{ entry.date.strftime('%d %b %Y') }}
+              {% else %}
+                <span class="text-muted">N/A</span>
+              {% endif %}
+            </td>
             <td>
               {% if entry.movie.imdb_id %}
                 <a href="https://www.imdb.com/title/{{ entry.movie.imdb_id }}" target="_blank">
@@ -28,8 +34,69 @@
               {% endif %}
             </td>
             <td>{{ entry.location or '-' }}</td>
-            <td>{{ entry.companions or '-' }}</td>
-            <td>{{ entry.technology or '-' }}</td>
+            <td>
+              {% if entry.companions %}
+                {% for person in entry.companions.split(';') %}
+                  {% set color = person | color_for_name %}
+                  <span class="badge text-white me-1" style="background-color: {{ color }};">
+                    {{ person.strip() }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>
+            {% if entry.technology %}
+              {% if entry.technology|lower == 'imax' %}
+                <!-- IMAX SVG -->
+                <svg width="90" height="32" viewBox="0 0 90 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <text x="5" y="25" font-family="Arial Black, Arial, sans-serif" font-size="24" fill="#1976d2" font-weight="bold" letter-spacing="6">
+                    IMAX
+                  </text>
+                </svg>
+                {% elif entry.technology|lower == 'imax 3d' %}
+                <svg width="110" height="40" viewBox="0 0 110 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Kırmızı gölge (arka) -->
+                <text x="13" y="31" font-family="Arial Black, Arial, sans-serif" font-size="32" fill="#e63946" font-weight="bold" letter-spacing="7" opacity="0.85">
+                  IMAX
+                </text>
+                <!-- Ana yazı (mavi, üstte) -->
+                <text x="8" y="27" font-family="Arial Black, Arial, sans-serif" font-size="32" fill="#1976d2" font-weight="bold" letter-spacing="7">
+                  IMAX
+                </text>
+              </svg>
+              {% elif entry.technology|lower == 'screenx' %}
+                <!-- ScreenX SVG -->
+                <svg width="115" height="36" viewBox="0 0 115 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="1" width="113" height="34" rx="8" fill="#11131a" stroke="#38bdf8" stroke-width="2"/>
+                  <text x="10" y="24" font-family="Arial Black, Arial, sans-serif" font-size="18" fill="#38bdf8" letter-spacing="2" font-weight="bold">
+                    SCREEN
+                  </text>
+                  <g>
+                    <polygon points="89,8 97,18 89,28 92,28 99,18 92,8" fill="#38bdf8"/>
+                    <polygon points="99,8 91,18 99,28 96,28 89,18 96,8" fill="#38bdf8" opacity="0.5"/>
+                  </g>
+                </svg>
+              {% elif entry.technology|lower == '3d' %}
+                <!-- 3D Gözlük SVG -->
+                <svg width="60" height="28" viewBox="0 0 60 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="10" width="7" height="3" rx="1.5" fill="#23272f"/>
+                  <rect x="51" y="10" width="7" height="3" rx="1.5" fill="#23272f"/>
+                  <rect x="7" y="8" width="46" height="12" rx="6" fill="#23272f"/>
+                  <ellipse cx="18" cy="14" rx="8" ry="6" fill="#ff8fa3" stroke="#2b2d42" stroke-width="1"/>
+                  <ellipse cx="42" cy="14" rx="8" ry="6" fill="#8fd3ff" stroke="#2b2d42" stroke-width="1"/>
+                  <path d="M26,13 Q30,10 34,13" stroke="#2b2d42" stroke-width="2" fill="none"/>
+                  <ellipse cx="15.5" cy="12" rx="2" ry="1" fill="#fff" opacity="0.7"/>
+                  <ellipse cx="39.5" cy="12" rx="2" ry="1" fill="#fff" opacity="0.7"/>
+                </svg>
+              {% else %}
+                {{ entry.technology }}
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
           </tr>
         {% endfor %}
       </tbody>

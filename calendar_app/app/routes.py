@@ -3,8 +3,11 @@ from datetime import datetime, date
 from calendar import monthrange
 from app.models import db, Log, Movie, Series, CinemaViewing
 from imdb import IMDb
+from app.utils import download_poster
 
 main = Blueprint('main', __name__)
+
+
 
 activity_sizes = {
     'movie': 4,
@@ -71,6 +74,9 @@ def add_log():
             movie = Movie(name=log.name, year=year, duration=duration, imdb_id=imdb_id)
             db.session.add(movie)
             db.session.flush()
+
+            if imdb_id:
+                download_poster(imdb_id)
 
         log.movie_id = movie.id
 

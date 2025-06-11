@@ -53,12 +53,18 @@ function renderMovieGrid(movies) {
   }
   movies.forEach(movie => {
     const posterUrl = `/static/img/posters/${movie.imdb_id}.jpg`;
+    const imdbUrl = `https://www.imdb.com/title/${movie.imdb_id}`;
     const movieCard = `
       <div class="col-6 col-sm-4 col-md-3 col-lg-2">
         <div class="card shadow-sm h-100 border-0">
-          <img src="${posterUrl}" class="card-img-top" alt="${movie.name}" style="aspect-ratio:2/3; object-fit:cover; background:#f0f0f0;">
+          <img src="${posterUrl}" class="card-img-top" alt="${movie.name}" style="aspect-ratio:2/3; object-fit:cover; background:#f0f0f0;"
+               onerror="this.onerror=null;this.src='/static/img/posters/default.jpg';">
           <div class="card-body px-2 py-2 text-center">
-            <div class="fw-bold small" style="min-height:2.5em">${movie.name}</div>
+            <div class="fw-bold small" style="min-height:2.5em">
+            <a href="${imdbUrl}" target="_blank" rel="noopener" class="text-decoration-none text-reset">
+                ${movie.name}
+              </a>
+            </div>
             <div class="text-secondary small">${movie.year}</div>
           </div>
         </div>

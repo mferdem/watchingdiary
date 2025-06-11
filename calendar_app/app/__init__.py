@@ -1,12 +1,15 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from app.filters import color_for_name
 
 db = SQLAlchemy()
 migrate = Migrate()
 
 def create_app(testing=False):
     app = Flask(__name__)
+
+    app.jinja_env.filters['color_for_name'] = color_for_name
     
     if testing:
         app.config['TESTING'] = True

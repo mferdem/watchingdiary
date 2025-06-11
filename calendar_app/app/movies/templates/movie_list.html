@@ -24,6 +24,7 @@
           <th>Duration</th>
           <th>Watch Count</th>
           <th>Cinema Count</th>
+          <th>My Rating</th>
           <th>Last Watch</th>
         </tr>
       </thead>
@@ -42,6 +43,55 @@
   <script src="https://cdn.datatables.net/v/bs5/jq-3.7.0/dt-2.3.0/datatables.min.js" crossorigin="anonymous"></script>
 
   <script>
+    function renderStars(rating) {
+      rating = parseFloat(rating) || 0;
+      let starsValue = rating / 2;
+      let stars = '';
+      for (let i = 1; i <= 5; i++) {
+        if (starsValue >= i) {
+          // Tam yıldız
+          stars += fullStarSVG();
+        } else if (starsValue >= i - 0.5) {
+          // Yarım yıldız
+          stars += halfStarSVG();
+        } else {
+          // Boş yıldız
+          stars += emptyStarSVG();
+        }
+      }
+      return `<span title="${rating}/10" style="display:inline-block;vertical-align:middle">${stars}</span>`;
+    }
+
+    // Tam yıldız SVG
+    function fullStarSVG() {
+      return `<svg width="20" height="20" viewBox="0 0 20 20" style="margin-right:1px;vertical-align:middle" fill="#ffc107" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="10,2 12.4,7.6 18.5,8 13.5,12.2 15,18 10,14.6 5,18 6.5,12.2 1.5,8 7.6,7.6"/>
+      </svg>`;
+    }
+
+    // Yarım yıldız SVG
+    function halfStarSVG() {
+      return `<svg width="20" height="20" viewBox="0 0 20 20" style="margin-right:1px;vertical-align:middle" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="half_grad">
+            <stop offset="50%" stop-color="#ffc107"/>
+            <stop offset="50%" stop-color="#e0e0e0"/>
+          </linearGradient>
+        </defs>
+        <polygon points="10,2 12.4,7.6 18.5,8 13.5,12.2 15,18 10,14.6 5,18 6.5,12.2 1.5,8 7.6,7.6"
+          fill="url(#half_grad)"/>
+      </svg>`;
+    }
+
+    // Boş yıldız SVG
+    function emptyStarSVG() {
+      return `<svg width="20" height="20" viewBox="0 0 20 20" style="margin-right:1px;vertical-align:middle" fill="#e0e0e0" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="10,2 12.4,7.6 18.5,8 13.5,12.2 15,18 10,14.6 5,18 6.5,12.2 1.5,8 7.6,7.6"/>
+      </svg>`;
+    }
+  </script>
+  
+  <script>
     $(document).ready(function () {
       $('#moviesTable').DataTable({
         serverSide: true,
@@ -50,7 +100,6 @@
           url: "{{ url_for('movies.movie_data') }}",
           type: 'POST',
           data: function(d) {
-            // Buraya custom filtreleri de ekleyebilirsin
             d.year = {{ selected_year or 'null' }};
             d.decade = {{ selected_decade or 'null' }};
           }
@@ -62,6 +111,16 @@
           { data: 'duration' },
           { data: 'watch_count' },
           { data: 'cinema_count' },
+          {
+            data: 'my_rating',
+            orderable: true,
+            render: function (data, type, row) {
+              if (type === 'display') {
+                return renderStars(data);
+              }
+              return data;
+            }
+          },
           { data: 'last_watch' }
         ],
         pageLength: 25,

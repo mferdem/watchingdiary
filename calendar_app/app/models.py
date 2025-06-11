@@ -50,6 +50,8 @@ class Movie(db.Model):
     year = db.Column(db.Integer)
     duration = db.Column(db.Integer)
     imdb_id = db.Column(db.String(50), unique=True)
+    my_rating = db.Column(db.Integer)
+    tag = db.Column(db.String(255))
 
     def __repr__(self):
         return f"<Movie {self.name} ({self.year})>"
