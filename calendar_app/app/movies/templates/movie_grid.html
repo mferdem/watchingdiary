@@ -12,13 +12,14 @@
     <div id="yearButtons" class="d-flex flex-wrap justify-content-center gap-2"></div>
   </div>
 
-  <!-- Movie Grid -->
-  <div id="movieGrid" class="row g-4"></div>
-
   <!-- Pagination -->
   <nav>
     <ul class="pagination justify-content-center mt-4" id="pagination"></ul>
   </nav>
+
+  <!-- Movie Grid -->
+  <div id="movieGrid" class="row g-4"></div>
+
 </div>
 {% endblock %}
 
@@ -80,13 +81,51 @@ function renderPagination(total, currentPage, pageSize) {
   pag.innerHTML = '';
   if (totalPages <= 1) return;
 
-  for (let i = 1; i <= totalPages; i++) {
-    pag.innerHTML += `
-      <li class="page-item ${i === currentPage ? 'active' : ''}">
-        <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
-      </li>
-    `;
+  const windowSize = 10;  // aktifin etrafında 10'ar tane
+  let pages = [];
+
+  // Her zaman ilk sayfa
+  pages.push(1);
+
+  // Gerekirse ... ekle
+  let left = Math.max(2, currentPage - windowSize);
+  let right = Math.min(totalPages - 1, currentPage + windowSize);
+
+  if (left > 2) pages.push('...');
+  for (let i = left; i <= right; i++) {
+    pages.push(i);
   }
+  if (right < totalPages - 1) pages.push('...');
+  
+  // Her zaman son sayfa
+  if (totalPages > 1) pages.push(totalPages);
+
+  // Geri butonu
+  pag.innerHTML += `
+    <li class="page-item${currentPage === 1 ? ' disabled' : ''}">
+      <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">&laquo;</a>
+    </li>
+  `;
+
+  // Sayfalar
+  pages.forEach(page => {
+    if (page === '...') {
+      pag.innerHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    } else {
+      pag.innerHTML += `
+        <li class="page-item${page === currentPage ? ' active' : ''}">
+          <a class="page-link" href="#" onclick="goToPage(${page}); return false;">${page}</a>
+        </li>
+      `;
+    }
+  });
+
+  // İleri butonu
+  pag.innerHTML += `
+    <li class="page-item${currentPage === totalPages ? ' disabled' : ''}">
+      <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">&raquo;</a>
+    </li>
+  `;
 }
 
 function goToPage(page) {
