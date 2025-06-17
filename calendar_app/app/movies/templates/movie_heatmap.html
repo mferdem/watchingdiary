@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h3 class="mb-4">Yıl & Puan Yoğunluk Haritası (Plotly)</h3>
+  <div id="heatmap" style="height: 600px;"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Plotly CDN -->
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<script>
+  const years = {{ years|tojson }};
+  const ratings = {{ ratings|tojson }};
+  const z = {{ heatmap_data|tojson }};
+  
+  const data = [{
+    z: z,
+    x: years,
+    y: ratings,
+    type: 'heatmap',
+    colorscale: [
+  [0, 'white'],   // 0'a karşılık gelen renk
+  [0.01, '#ffcccc'], // 1'de çok açık kırmızı
+  [0.2, '#ff6666'],
+  [0.4, '#ff3333'],
+  [0.7, '#cc0000'],
+  [1, '#800000']   // Max değer için koyu kırmızı
+],
+    hoverongaps: false,
+    colorbar: {
+      title: "Film Sayısı",
+      tickvals: [0, 1, 2, 3, 4, 5],
+    }
+  }];
+
+  const layout = {
+  xaxis: {
+    title: 'Yıl',
+    tickangle: -45,
+    tickmode: 'array',
+    tickvals: years,
+    automargin: true
+  },
+  yaxis: {
+    title: 'Puan',
+    autorange: 'reversed', // <<< Düşey ekseni tersine çevirir
+    tickmode: 'array',
+    tickvals: ratings,
+    automargin: true
+  },
+  margin: {l: 70, r: 20, t: 20, b: 120}
+};
+
+  Plotly.newPlot('heatmap', data, layout, {responsive: true});
+</script>
+{% endblock %}

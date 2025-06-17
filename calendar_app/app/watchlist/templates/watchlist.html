@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Watchlists</h3>
+  <form class="row g-2 mb-4" method="POST" action="{{ url_for('watchlist.create_watchlist') }}">
+    <div class="col-auto">
+      <input class="form-control" name="name" placeholder="Yeni watchlist ismi" required>
+    </div>
+    <div class="col-auto">
+      <input type="date" class="form-control" name="countdown_date" placeholder="Geri sayım tarihi">
+    </div>
+    <div class="col-auto">
+      <input class="form-control" name="description" placeholder="Açıklama">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary" type="submit">Ekle</button>
+    </div>
+  </form>
+  </div>
+  <div class="container-fluid mt-4">
+
+  <div class="watchlist-scrollbar d-flex flex-nowrap overflow-auto py-2" style="gap: 1.5rem;">
+    {% for wl in lists %}
+      <div class="watchlist-card" data-list-id="{{ wl.id }}" style="min-width:350px; max-width:350px; flex:0 0 auto; cursor: grab;">
+        <div class="card h-100">
+          <div class="card-header d-flex justify-content-between">
+            <span>{{ wl.name }}</span>
+            {% if wl.countdown_date %}
+              <span class="badge bg-info text-dark" id="countdown-{{ wl.id }}"></span>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            <form class="d-flex mb-2 add-item-form" data-wlid="{{ wl.id }}">
+              <input type="text" class="form-control me-2" name="name" placeholder="Film/dizi ekle..." required>
+              <button class="btn btn-success" type="submit">+</button>
+            </form>
+            <ul class="list-group sortable" id="sortable-{{ wl.id }}" data-wlid="{{ wl.id }}">
+              {% for item in wl.items|sort(attribute='position') %}
+                <li class="list-group-item d-flex align-items-center justify-content-between {% if item.completed %}text-decoration-line-through text-muted{% endif %}" data-id="{{ item.id }}">
+                  <div class="d-flex align-items-center">
+                    <input type="checkbox" class="form-check-input me-2 toggle-complete" data-id="{{ item.id }}" {% if item.completed %}checked{% endif %}>
+                    <span>{{ item.name }}</span>
+                  </div>
+                  <button class="btn btn-sm btn-outline-danger delete-item" data-id="{{ item.id }}">&times;</button>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.watchlist-scrollbar {
+  scrollbar-color: #1976d2 #f2f2f2;
+  scrollbar-width: thin;
+  padding-bottom: 10px;
+}
+.watchlist-scrollbar::-webkit-scrollbar {
+  height: 10px;
+}
+.watchlist-scrollbar::-webkit-scrollbar-thumb {
+  background: #1976d2;
+  border-radius: 5px;
+}
+.watchlist-card {
+  min-width: 350px;
+  max-width: 350px;
+  flex: 0 0 auto;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Watchlist kartlarını yatayda drag-drop
+  var listsSortable = document.querySelector('.watchlist-scrollbar');
+  if (listsSortable) {
+    new Sortable(listsSortable, {
+      animation: 200,
+      handle: '.card-header',
+      draggable: '.watchlist-card',
+      onEnd: function(evt){
+        let ids = Array.from(listsSortable.children)
+          .filter(div => div.classList.contains('watchlist-card'))
+          .map(div => div.dataset.listId);
+        fetch('/watchlist/reorder_lists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: ids })
+        });
+      }
+    });
+  }
+
+  // Her watchlist içindeki itemlar için drag-drop
+  document.querySelectorAll('.sortable').forEach(function(ul){
+    new Sortable(ul, {
+      animation: 150,
+      onEnd: function(evt){
+        let wlid = ul.dataset.wlid;
+        let ids = Array.from(ul.children).map(li => li.dataset.id);
+        fetch(`/watchlist/${wlid}/reorder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: ids }),
+        });
+      }
+    });
+  });
+
+  // AJAX ile yeni item ekle
+  document.querySelectorAll('.add-item-form').forEach(function(form){
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      let wlid = form.dataset.wlid;
+      let input = form.querySelector('input[name="name"]');
+      let name = input.value;
+      fetch(`/watchlist/${wlid}/add_item`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(name)}`
+      }).then(() => window.location.reload());
+    });
+  });
+
+  // Item silme
+  document.querySelectorAll('.delete-item').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      let itemId = btn.dataset.id;
+      fetch(`/watchlist/item/${itemId}/delete`, {
+        method: 'POST'
+      }).then(() => window.location.reload());
+    });
+  });
+
+  // Tamamlandı (checkbox toggle)
+  document.querySelectorAll('.toggle-complete').forEach(function(chk){
+    chk.addEventListener('change', function(e){
+      let itemId = chk.dataset.id;
+      fetch(`/watchlist/item/${itemId}/toggle`, {
+        method: 'POST'
+      }).then(() => window.location.reload());
+    });
+  });
+
+  // Geri sayım hesapla
+  {% for wl in lists if wl.countdown_date %}
+  (function(){
+    let target = new Date('{{ wl.countdown_date.isoformat() }}');
+    let badge = document.getElementById('countdown-{{ wl.id }}');
+    if (badge) {
+      let now = new Date();
+      let diff = Math.ceil((target - now) / (1000*60*60*24));
+      badge.innerText = (diff >= 0 ? diff-1 + " gün kaldı" : "Geçti!");
+    }
+  })();
+  {% endfor %}
+});
+</script>
+{% endblock %}

@@ -6,6 +6,7 @@ from app.utils import measure_time
 from sqlalchemy import func, desc, and_, extract
 from sqlalchemy.orm import aliased
 from datetime import datetime
+from collections import Counter
 
 
 movies_bp = Blueprint('movies', __name__, template_folder='templates', url_prefix='/movies')
@@ -247,3 +248,51 @@ def movie_grid_data():
         'page': page,
         'page_size': page_size
     })
+
+@movies_bp.route('/years-rating-distribution')
+def years_rating_distribution():
+    movies = (
+        Movie.query
+        .filter(Movie.year != None, Movie.my_rating != None)
+        .order_by(Movie.year)
+        .all()
+    )
+    years = [movie.year for movie in movies]
+    ratings = [movie.my_rating for movie in movies]
+    names = [movie.name for movie in movies]
+
+    return render_template(
+        'years_rating_distribution.html',
+        years=years,
+        ratings=ratings,
+        names=names
+    )
+
+
+
+@movies_bp.route('/movie-heatmap')
+def movie_heatmap():
+    movies = (
+        Movie.query
+        .filter(Movie.year != None, Movie.my_rating != None)
+        .all()
+    )
+    years = sorted(set(m.year for m in movies if m.year))
+    ratings = sorted(set(m.my_rating for m in movies if m.my_rating is not None), reverse=True)
+
+    counts = Counter((m.year, m.my_rating) for m in movies)
+
+    # 2D dizi (puan-yıl matrisi) hazırla
+    heatmap_data = []
+    for rating in ratings:
+        row = []
+        for year in years:
+            row.append(counts.get((year, rating), 0))
+        heatmap_data.append(row)
+
+    return render_template(
+        'movie_heatmap.html',
+        years=years,
+        ratings=ratings,
+        heatmap_data=heatmap_data
+    )

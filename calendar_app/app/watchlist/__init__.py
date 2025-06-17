@@ -1,0 +1,1 @@
+from .routes import watchlist_bp

@@ -97,3 +97,32 @@ class Concert(db.Model):
 
     def __repr__(self):
         return f"<Concert {self.name} at {self.location}>"
+    
+class Watchlist(db.Model):
+    __tablename__ = 'watchlist'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(255))
+    countdown_date = db.Column(db.Date)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    position = db.Column(db.Integer, default=0)
+
+    items = db.relationship('WatchlistItem', backref='watchlist', lazy=True, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f"<Watchlist {self.name}>"
+
+class WatchlistItem(db.Model):
+    __tablename__ = 'watchlist_item'
+
+    id = db.Column(db.Integer, primary_key=True)
+    watchlist_id = db.Column(db.Integer, db.ForeignKey('watchlist.id'), nullable=False)
+    name = db.Column(db.String(255), nullable=False)  # Film/dizi adı serbest giriş
+    notes = db.Column(db.String(255))
+    position = db.Column(db.Integer, nullable=False, default=0)  # Sıralama için
+    completed = db.Column(db.Boolean, default=False)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<WatchlistItem {self.name}>"

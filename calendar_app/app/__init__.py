@@ -28,8 +28,10 @@ def create_app(testing=False):
 
     from app.routes import main as main_blueprint
     from .movies import movies_bp
+    from .watchlist import watchlist_bp
     
-    app.register_blueprint(movies_bp)
     app.register_blueprint(main_blueprint)
+    app.register_blueprint(movies_bp)
+    app.register_blueprint(watchlist_bp)
 
     return app

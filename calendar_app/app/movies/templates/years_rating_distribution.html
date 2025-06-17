@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h3 class="mb-4">Yıllara Göre Verdiğim Film Puanları</h3>
+  <canvas id="movieGraph" height="120"></canvas>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const years = {{ years | tojson }};
+  const ratings = {{ ratings | tojson }};
+  const names = {{ names | tojson }};
+  
+  // Chart.js ile scatter plot
+  const ctx = document.getElementById('movieGraph').getContext('2d');
+  const data = {
+    datasets: [{
+      label: 'Filmler',
+      data: years.map((y, i) => ({x: y, y: ratings[i], title: names[i]})),
+      pointRadius: 6,
+      backgroundColor: 'rgba(25, 118, 210, 0.8)',
+      hoverRadius: 10,
+    }]
+  };
+
+  const config = {
+    type: 'scatter',
+    data: data,
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const d = ctx.raw;
+              return `${d.title} (${d.x}): ${d.y}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          title: { display: true, text: 'Yıl' },
+          ticks: { stepSize: 1 }
+        },
+        y: {
+          title: { display: true, text: 'Verdiğim Puan' },
+          min: 0,
+          max: 10,
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  };
+
+  new Chart(ctx, config);
+</script>
+{% endblock %}

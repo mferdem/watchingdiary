@@ -1,0 +1,79 @@
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>
+      <b>{{ wl.name }}</b>
+      {% if wl.description %}
+        <small class="text-muted ms-2">{{ wl.description }}</small>
+      {% endif %}
+    </span>
+    {% if wl.countdown_date %}
+      <span class="badge bg-info text-dark" id="countdown-{{ wl.id }}"></span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <!-- Yeni item ekleme -->
+    <form class="d-flex mb-3 add-item-form" data-wlid="{{ wl.id }}">
+      <input type="text" class="form-control me-2" name="name" placeholder="Film/dizi adı ekle..." required>
+      <button class="btn btn-success" type="submit">+</button>
+    </form>
+    <!-- Watchlist item listesi -->
+    <ul class="list-group sortable" id="sortable-{{ wl.id }}" data-wlid="{{ wl.id }}">
+      {% for item in wl.items|sort(attribute='position') %}
+        <li class="list-group-item d-flex align-items-center" data-id="{{ item.id }}">
+          <span>{{ item.name }}</span>
+        </li>
+      {% else %}
+        <li class="list-group-item text-muted">Henüz hiç öğe eklenmemiş.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Sürükle-bırak için
+  var ul = document.getElementById('sortable-{{ wl.id }}');
+  if (ul && window.Sortable) {
+    new Sortable(ul, {
+      animation: 150,
+      onEnd: function(evt){
+        let wlid = ul.dataset.wlid;
+        let ids = Array.from(ul.children).map(li => li.dataset.id);
+        fetch(`/watchlist/${wlid}/reorder`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order: ids }),
+        });
+      }
+    });
+  }
+
+  // Item ekleme
+  var form = document.querySelector('.add-item-form[data-wlid="{{ wl.id }}"]');
+  if (form) {
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      let input = form.querySelector('input[name="name"]');
+      let name = input.value;
+      fetch(`/watchlist/{{ wl.id }}/add_item`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `name=${encodeURIComponent(name)}`
+      }).then(() => window.location.reload());
+    });
+  }
+
+  // Geri sayım
+  {% if wl.countdown_date %}
+  (function(){
+    let target = new Date('{{ wl.countdown_date.isoformat() }}');
+    let badge = document.getElementById('countdown-{{ wl.id }}');
+    if (badge) {
+      let now = new Date();
+      let diff = Math.ceil((target - now) / (1000*60*60*24));
+      badge.innerText = (diff >= 0 ? diff + " gün kaldı" : "Geçti!");
+    }
+  })();
+  {% endif %}
+});
+</script>
