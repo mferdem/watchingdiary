@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  {{ super() }}
+{% endblock %}
+
+{% block navbar_buttons %}
+  {{ super() }}
+  <a class="btn btn-outline-light btn-sm" href="{{ url_for('series.series_list') }}">Series Gallery</a>
+  <a class="btn btn-outline-light btn-sm" href="{{ url_for('series.series_new') }}">Add New Series</a>
+{% endblock %}

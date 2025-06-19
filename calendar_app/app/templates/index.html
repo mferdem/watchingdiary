@@ -60,7 +60,7 @@
                         {% endif %}
 
                       {% elif log.is_series() %}
-                        {{ log.series.name }} {% if log.season and log.episode %}{{ log.season }}{{ "%02d"|format(log.episode) }}{% endif %}
+                        {{ log.episode.season.series.name }} {{ log.episode.season.season_number }}{{ "%02d"|format(log.episode.episode_number) }}
                       {% elif log.activity_type == 'match' %}
                         {% if 'beşiktaş' in log.name|lower %}
                           <img src="{{ url_for('static', filename='img/bjk.svg') }}"

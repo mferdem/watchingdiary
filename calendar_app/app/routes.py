@@ -1,13 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import datetime, date
 from calendar import monthrange
-from app.models import db, Log, Movie, Series, CinemaViewing
+from app.models import db, Log, Movie, Series, Season, Episode, Concert, CinemaViewing
 from imdb import IMDb
 from app.utils import download_poster
 
 main = Blueprint('main', __name__)
-
-
 
 activity_sizes = {
     'movie': 4,
@@ -96,8 +94,8 @@ def add_log():
 
     elif activity_type == 'series':
         imdb_id = form.get('imdb_id') or None
-        season = form.get('season')
-        episode = form.get('episode')
+        season_number = int(form.get('season'))
+        episode_number = int(form.get('episode'))
 
         series = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=log.name).first()
         if not series:
@@ -105,9 +103,21 @@ def add_log():
             db.session.add(series)
             db.session.flush()
 
-        log.series_id = series.id
-        log.season = season
-        log.episode = episode
+        season = Season.query.filter_by(series_id=series.id, season_number=season_number).first()
+        if not season:
+            season = Season(series_id=series.id, season_number=season_number)
+            db.session.add(season)
+            db.session.flush()
+
+        episode = Episode.query.filter_by(season_id=season.id, episode_number=episode_number).first()
+        if not episode:
+            episode = Episode(season_id=season.id, episode_number=episode_number, is_watched=True)
+            db.session.add(episode)
+            db.session.flush()
+        else:
+            episode.is_watched = True
+
+        log.episode_id = episode.id
 
     elif activity_type == 'match':
         if form.get('matchInStadium') == 'on':
@@ -136,9 +146,7 @@ def edit_log(log_id):
         log.location = None
         log.companions = None
         log.movie_id = None
-        log.series_id = None
-        log.season = None
-        log.episode = None
+        log.episode_id = None
 
         if activity_type == 'movie':
             year = request.form.get('year')
@@ -169,8 +177,8 @@ def edit_log(log_id):
                 db.session.add(cinema)
 
         elif activity_type == 'series':
-            season = request.form.get('season')
-            episode = request.form.get('episode')
+            season_number = int(request.form.get('season'))
+            episode_number = int(request.form.get('episode'))
 
             series = Series.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Series.query.filter_by(name=name).first()
             if not series:
@@ -178,9 +186,21 @@ def edit_log(log_id):
                 db.session.add(series)
                 db.session.flush()
 
-            log.series_id = series.id
-            log.season = season
-            log.episode = episode
+            season = Season.query.filter_by(series_id=series.id, season_number=season_number).first()
+            if not season:
+                season = Season(series_id=series.id, season_number=season_number)
+                db.session.add(season)
+                db.session.flush()
+
+            episode = Episode.query.filter_by(season_id=season.id, episode_number=episode_number).first()
+            if not episode:
+                episode = Episode(season_id=season.id, episode_number=episode_number, is_watched=True)
+                db.session.add(episode)
+                db.session.flush()
+            else:
+                episode.is_watched = True
+
+            log.episode_id = episode.id
             log.name = name
 
         elif activity_type == 'match':

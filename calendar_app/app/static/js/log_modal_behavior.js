@@ -108,3 +108,19 @@ stars.forEach(star => {
     });
   });
 });
+
+const editStars = document.querySelectorAll('#editRatingStars .star');
+const editRatingInput = document.getElementById('editMyRatingInput');
+
+if (editStars.length && editRatingInput) {
+  editStars.forEach(star => {
+    star.addEventListener('click', () => {
+      const rating = parseInt(star.dataset.value);
+      editRatingInput.value = rating;
+
+      editStars.forEach(s => {
+        s.classList.toggle('selected', parseInt(s.dataset.value) <= rating);
+      });
+    });
+  });
+}

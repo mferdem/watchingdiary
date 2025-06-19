@@ -1,0 +1,74 @@
+{% extends 'series_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4 text-center">Edit Series</h3>
+
+  <form method="POST">
+    <div class="mb-3">
+      <label class="form-label">Series Name</label>
+      <input type="text" name="name" class="form-control" value="{{ series.name }}" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">IMDb ID</label>
+      <input type="text" name="imdb_id" class="form-control" value="{{ series.imdb_id }}">
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Start Year</label>
+        <input type="number" name="start_year" class="form-control" value="{{ series.start_year }}">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">End Year</label>
+        <input type="number" name="end_year" class="form-control" value="{{ series.end_year or '' }}">
+      </div>
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Episode Duration (min)</label>
+        <input type="number" name="episode_duration" class="form-control" value="{{ series.episode_duration or '' }}">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">How many seasons?</label>
+      <input type="number" name="season_count" id="seasonCount" class="form-control" value="{{ series.seasons|length }}">
+    </div>
+
+    <div id="seasonFields">
+      {% for season in series.seasons|sort(attribute='season_number') %}
+        <div class="mb-3">
+          <label class="form-label">Season {{ season.season_number }} - Episode Count</label>
+          <input type="number" name="season_{{ season.season_number }}_episode_count" class="form-control" value="{{ season.episode_count }}">
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-success">Save Changes</button>
+      <a href="{{ url_for('series.series_list') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const seasonInput = document.getElementById('seasonCount');
+  const seasonFields = document.getElementById('seasonFields');
+
+  seasonInput.addEventListener('input', () => {
+    const count = parseInt(seasonInput.value);
+    seasonFields.innerHTML = '';
+
+    if (!isNaN(count) && count > 0) {
+      for (let i = 1; i <= count; i++) {
+        const html = `
+          <div class="mb-3">
+            <label class="form-label">Season ${i} - Episode Count</label>
+            <input type="number" name="season_${i}_episode_count" class="form-control" required>
+          </div>`;
+        seasonFields.insertAdjacentHTML('beforeend', html);
+      }
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'series_base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="mb-4 text-center">Series Gallery</h3>
+
+  <form method="GET" class="mb-4 d-flex justify-content-center">
+    <input type="text" name="search" class="form-control w-50" placeholder="Search series..." value="{{ request.args.get('search', '') }}">
+    <button type="submit" class="btn btn-primary ms-2">Search</button>
+  </form>
+
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for s in series_list %}
+      {% set watched_eps = namespace(value=0) %}
+      {% for season in s.seasons %}
+        {% for ep in season.episodes %}
+          {% set watched_eps.value = watched_eps.value + (1 if ep.is_watched else 0) %}
+        {% endfor %}
+      {% endfor %}
+      {% set total_eps = s.seasons | map(attribute='episodes') | map('length') | sum %}
+      {% set percent = (watched_eps.value / total_eps * 100) if total_eps else 0 %}
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ s.name }}</h5>
+            <p class="card-text">
+              <strong>Years:</strong> {{ s.start_year }} - {{ s.end_year or '...' }}<br>
+              <strong>IMDb:</strong> {{ s.imdb_id or '-' }}<br>
+              <strong>Seasons:</strong> {{ s.seasons|length }}<br>
+              <strong>Watched:</strong>
+                {% if total_eps > 0 %}
+                  {{ watched_eps.value }}/{{ total_eps }} ({{ percent|round(1) }}%)
+                {% else %}
+                  0/0
+                {% endif %}
+            </p>
+            <div class="progress mb-2">
+              <div class="progress-bar" role="progressbar" style="width: {{ percent }}%;"
+                   aria-valuenow="{{ percent|round(0) }}" aria-valuemin="0" aria-valuemax="100">
+                {{ percent|round(0) }}%
+              </div>
+            </div>
+            <a href="{{ url_for('series.series_detail', series_id=s.id) }}" class="btn btn-sm btn-outline-primary">Details</a>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <p class="text-center">No series found.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
