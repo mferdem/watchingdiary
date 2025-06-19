@@ -37,6 +37,15 @@
         <label class="form-label">IMDb ID</label>
         <input type="text" name="imdb_id" class="form-control" value="{{ log.movie.imdb_id or '' }}">
       </div>
+      <div class="mb-3">
+        <label class="form-label">Your Rating</label>
+        <div id="editRatingStars" class="star-rating">
+          {% for i in range(1, 6) %}
+            <i class="star bi bi-star {% if log.movie.my_rating and log.movie.my_rating >= i %}selected{% endif %}" data-value="{{ i }}"></i>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="my_rating" id="editMyRatingInput" value="{{ log.movie.my_rating or '' }}">
+      </div>
 
       {% set cinema = log.movie.cinema_viewings | selectattr('date', 'equalto', log.date) | list | first %}
       <div class="form-check mb-2">

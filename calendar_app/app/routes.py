@@ -68,15 +68,18 @@ def add_log():
         imdb_id = form.get('imdb_id') or None
         duration = form.get('duration') or None
         year = form.get('year') or None
+        rating = form.get('my_rating')
 
         movie = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=log.name, year=year).first()
         if not movie:
-            movie = Movie(name=log.name, year=year, duration=duration, imdb_id=imdb_id)
+            movie = Movie(name=log.name, year=year, duration=duration, imdb_id=imdb_id, my_rating=rating)
             db.session.add(movie)
             db.session.flush()
 
             if imdb_id:
                 download_poster(imdb_id)
+        else:
+            movie.my_rating = rating
 
         log.movie_id = movie.id
 
@@ -141,10 +144,11 @@ def edit_log(log_id):
             year = request.form.get('year')
             duration = request.form.get('duration')
             in_cinema = request.form.get('filmInCinema') == 'on'
+            my_rating = request.form.get('my_rating')
 
             movie = Movie.query.filter_by(imdb_id=imdb_id).first() if imdb_id else Movie.query.filter_by(name=name, year=year).first()
             if not movie:
-                movie = Movie(name=name, year=year, duration=duration, imdb_id=imdb_id)
+                movie = Movie(name=name, year=year, duration=duration, imdb_id=imdb_id, my_rating=my_rating)
                 db.session.add(movie)
                 db.session.flush()
 

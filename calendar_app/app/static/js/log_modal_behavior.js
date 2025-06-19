@@ -93,3 +93,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+const stars = document.querySelectorAll('#ratingStars .star');
+const ratingInput = document.getElementById('myRatingInput');
+
+stars.forEach(star => {
+  star.addEventListener('click', () => {
+    const rating = parseInt(star.dataset.value);
+    ratingInput.value = rating;
+
+    stars.forEach(s => {
+      s.classList.toggle('selected', parseInt(s.dataset.value) <= rating);
+    });
+  });
+});
